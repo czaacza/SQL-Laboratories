@@ -335,7 +335,6 @@ INSERT INTO ETATY(id_osoby, id_firmy, stanowisko, pensja, od, do) VALUES (@id_ak
 	Dodajemy rekordy do tabeli ETATY pos³uguj¹c siê zmiennymi przechowuj¹cymi id osób - 20 etatów, dwie firmy bez ¿adnych etatów
 */
 
-
 SELECT * FROM WOJ
 SELECT * FROM MIASTA
 SELECT * FROM OSOBY
@@ -345,3 +344,34 @@ SELECT * FROM ETATY
 /*
 	Wyœwietlamy wszystkie rekordy z wszysktich tabel
 */
+
+/* 
+	nie mozna wstawic do tabeli etaty rekordu osoby nieistniejacej
+
+	INSERT INTO ETATY(id_osoby, id_firmy, stanowisko, pensja, od, do) VALUES (@id_nieIstnieje, N'sams', N'Menager', 27500, CONVERT(datetime, '12/08/1991', 103), CONVERT(datetime, '09/11/2015', 103) )
+
+	Msg 137, Level 15, State 2, Line 1
+	Must declare the scalar variable "@id_nieIstnieje".
+*/
+
+/*
+	nie mozna usunac miasta w korym sa firmy lub osoby
+
+	DELETE FROM MIASTA WHERE id_miasta =  @id_wa
+	
+	Msg 547, Level 16, State 0, Line 254
+	The DELETE statement conflicted with the REFERENCE constraint "FK_OSOBY_MIASTA". The conflict occurred in database "b_319030", table "dbo.OSOBY", column 'id_miasta'.
+*/
+
+
+/*
+	nie mozna usunac tabeli osoby jezeli jest tabela etaty
+
+	DROP TABLE OSOBY
+
+	Msg 3726, Level 16, State 1, Line 264
+	Could not drop object 'OSOBY' because it is referenced by a FOREIGN KEY constraint.
+
+
+*/
+
