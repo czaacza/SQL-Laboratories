@@ -680,6 +680,13 @@ Z4 Mateusz, Czarnecki 319030, 2
 	Z4.1 - pokazaæ osoby z województwa o kodzie X, które nigdy
 	nie pracowa³y / nie pracuja tez obecnie w firmie z woj o tym samym kodzie
 	(lub innym - jakie dane lepsze)
+
+	czyli jezeli jakikolwiek etat spe³niaj¹cy warunek powy¿ej to osoby nie pokazujemy
+
+	Czyli jak Osoba MS mieszka w woj o kodzie X a pracuje w firmie z woj X
+	a drugi etat w firmie z woj Y
+	to takiej osoby NIE POKOZUJEMY !!!
+	A nie, ¿e poka¿emy jeden etat a drugi nie
 */
 
 
@@ -720,7 +727,7 @@ SELECT o.id_osoby, LEFT(o.imie, 20) AS [imie], LEFT(o.nazwisko, 20) AS [nazwisko
 
 /*
 	Z4.2 - pokazaæ liczbê mieszkañców w województwach
-	ale tylko w tych maj¹cych wiecej jak jednego (DWÓCH) mieszkañca
+	ale tylko w tych maj¹cych wiecej jak jednego mieszkañca
 */
 
 
@@ -734,50 +741,31 @@ SELECT w.kod_woj, tt.nazwa, tt.[liczba mieszkancow]
 	WHERE tt.[liczba mieszkancow] > 2
 
 /*
-	Zamiast waurnku liczby mieszkañców wiêkszej od 1, chcê aby pokazano mi dane dla liczby mieszkañców wiêkszej od 2, gdy¿ taki warunek umo¿liwi³ mi odró¿nienie od bezwarunkowego zapytania. 
-	(wszystkie miasta w tabeli mia³y wiêcej ni¿ 1 mieszkañca, a nie wszystkie wiêcej ni¿ 2)
-
 	Tworzê zapytanie szukaj¹ce kod_woj, nazwy oraz iloœci wyœwietlanych rekordów osób.
-	Tworzê zapytanie wewnêtrzne szukaj¹ce kod_woj, nazwê i liczbê mieszkañców, pogrupowane po kod_woj i nazwie.
-	Dajê warunek, w którym liczba mieszkañców z tabeli wewnêtrznej ma byæ wiêksza od 2.
+	Zapytanie grupujê po kod_woj i nazwie województwa. W ten sposób dla ka¿dego kod_woj i nazwy dostanê liczbê mieszkañców województwa.
 
 	kod_woj nazwa                liczba mieszkancow
 	------- -------------------- ------------------
 	doln    Dolnoslaskie         3
+	malo    Malopolskie          2
 	mazo    Mazowieckie          6
 	wiel    Wielkopolskie        3
 
-	(3 rows affected)
+	(4 row(s) affected)
+
 */
 
 
 /*
 	Z4.3 - pokazaæ sredni¹ pensjê w miastach
-	ale tylko tych posiadaj¹cych wiêcej jak jednego mieszkañca
+	ale tylko tych posiadaj¹cych wiêcej ja jednego mieszkañca
+
+	1 wariant -> etaty -> osoby -> miasta (srednia z osób mieszkaj¹cych)
+	2 wariant -> (srednia z firm w miastach) a liczba mieszkañców
 */
 
 
-SELECT  m.id_miasta, m.nazwa AS [nazwa miasta], AVG(e.pensja) AS [srednia pensja]
+SELECT 
 		FROM MIASTA m
-		JOIN OSOBY o ON o.id_miasta = m.id_miasta
-		JOIN ETATY e ON e.id_osoby = o.id_osoby
-		JOIN (SELECT m.id_miasta, COUNT(*) AS [liczba mieszkancow]
-				FROM MIASTA m
-				JOIN OSOBY o ON o.id_miasta = m.id_miasta
-				GROUP BY m.id_miasta, m.nazwa) tt ON tt.id_miasta = m.id_miasta
-		WHERE tt.[liczba mieszkancow] > 1
-		GROUP BY m.id_miasta, m.nazwa
-
-/*
-	Tworzê zapytanie wewnêtrzne pokazuj¹ce id_miasta i liczbê mieszkañców w danym mieœcie. U¿ywam do tego operatora COUNT(*) oraz grupuje rekordy po id_miasta.
-	W zapytaniu zewnêtrznym szukam id_miasta, nazwy miasta i œredniej pensji w miastach. Dziêki do³¹czeniu tabeli zawieraj¹cej liczbê mieszkañców, mogê daæ warunek mówi¹cy, ¿e ma byæ ona wiêksza od 1.
-
-
-	id_miasta   nazwa miasta                                       srednia pensja
-	----------- -------------------------------------------------- ---------------------
-	2           Pruszkow                                           14040,00
-	5           Milanowek                                          9600,00
-
-	(2 rows affected)
-
-*/
+		JOIN OSOBY o ON o.
+		JOIN ETATY e ON e.
