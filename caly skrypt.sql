@@ -674,19 +674,13 @@ SELECT w.kod_woj, w.nazwa
 */
 
 
+
 /*
 Z4 Mateusz, Czarnecki 319030, 2
 
 	Z4.1 - pokazaæ osoby z województwa o kodzie X, które nigdy
 	nie pracowa³y / nie pracuja tez obecnie w firmie z woj o tym samym kodzie
 	(lub innym - jakie dane lepsze)
-
-	czyli jezeli jakikolwiek etat spe³niaj¹cy warunek powy¿ej to osoby nie pokazujemy
-
-	Czyli jak Osoba MS mieszka w woj o kodzie X a pracuje w firmie z woj X
-	a drugi etat w firmie z woj Y
-	to takiej osoby NIE POKOZUJEMY !!!
-	A nie, ¿e poka¿emy jeden etat a drugi nie
 */
 
 
@@ -727,7 +721,7 @@ SELECT o.id_osoby, LEFT(o.imie, 20) AS [imie], LEFT(o.nazwisko, 20) AS [nazwisko
 
 /*
 	Z4.2 - pokazaæ liczbê mieszkañców w województwach
-	ale tylko w tych maj¹cych wiecej jak jednego mieszkañca
+	ale tylko w tych maj¹cych wiecej jak jednego (DWÓCH) mieszkañca
 */
 
 
@@ -741,31 +735,173 @@ SELECT w.kod_woj, tt.nazwa, tt.[liczba mieszkancow]
 	WHERE tt.[liczba mieszkancow] > 2
 
 /*
+	Zamiast waurnku liczby mieszkañców wiêkszej od 1, chcê aby pokazano mi dane dla liczby mieszkañców wiêkszej od 2, gdy¿ taki warunek umo¿liwi³ mi odró¿nienie od bezwarunkowego zapytania. 
+	(wszystkie miasta w tabeli mia³y wiêcej ni¿ 1 mieszkañca, a nie wszystkie wiêcej ni¿ 2)
+
 	Tworzê zapytanie szukaj¹ce kod_woj, nazwy oraz iloœci wyœwietlanych rekordów osób.
-	Zapytanie grupujê po kod_woj i nazwie województwa. W ten sposób dla ka¿dego kod_woj i nazwy dostanê liczbê mieszkañców województwa.
+	Tworzê zapytanie wewnêtrzne szukaj¹ce kod_woj, nazwê i liczbê mieszkañców, pogrupowane po kod_woj i nazwie.
+	Dajê warunek, w którym liczba mieszkañców z tabeli wewnêtrznej ma byæ wiêksza od 2.
 
 	kod_woj nazwa                liczba mieszkancow
 	------- -------------------- ------------------
 	doln    Dolnoslaskie         3
-	malo    Malopolskie          2
 	mazo    Mazowieckie          6
 	wiel    Wielkopolskie        3
 
-	(4 row(s) affected)
-
+	(3 rows affected)
 */
 
 
 /*
 	Z4.3 - pokazaæ sredni¹ pensjê w miastach
-	ale tylko tych posiadaj¹cych wiêcej ja jednego mieszkañca
-
-	1 wariant -> etaty -> osoby -> miasta (srednia z osób mieszkaj¹cych)
-	2 wariant -> (srednia z firm w miastach) a liczba mieszkañców
+	ale tylko tych posiadaj¹cych wiêcej jak jednego mieszkañca
 */
 
 
-SELECT 
+SELECT  m.id_miasta, m.nazwa AS [nazwa miasta], AVG(e.pensja) AS [srednia pensja]
 		FROM MIASTA m
-		JOIN OSOBY o ON o.
-		JOIN ETATY e ON e.
+		JOIN OSOBY o ON o.id_miasta = m.id_miasta
+		JOIN ETATY e ON e.id_osoby = o.id_osoby
+		JOIN (SELECT m.id_miasta, COUNT(*) AS [liczba mieszkancow]
+				FROM MIASTA m
+				JOIN OSOBY o ON o.id_miasta = m.id_miasta
+				GROUP BY m.id_miasta, m.nazwa) tt ON tt.id_miasta = m.id_miasta
+		WHERE tt.[liczba mieszkancow] > 1
+		GROUP BY m.id_miasta, m.nazwa
+
+/*
+	Tworzê zapytanie wewnêtrzne pokazuj¹ce id_miasta i liczbê mieszkañców w danym mieœcie. U¿ywam do tego operatora COUNT(*) oraz grupuje rekordy po id_miasta.
+	W zapytaniu zewnêtrznym szukam id_miasta, nazwy miasta i œredniej pensji w miastach. Dziêki do³¹czeniu tabeli zawieraj¹cej liczbê mieszkañców, mogê daæ warunek mówi¹cy, ¿e ma byæ ona wiêksza od 1.
+
+
+	id_miasta   nazwa miasta                                       srednia pensja
+	----------- -------------------------------------------------- ---------------------
+	2           Pruszkow                                           14040,00
+	5           Milanowek                                          9600,00
+
+	(2 rows affected)
+
+*/
+
+
+
+
+/*
+	Z5 Mateusz Czarnecki, 319030, 2 
+*/
+
+/*
+	Z5.1 - Pokazaæ firmy wraz ze œredni¹ aktualna pensj¹ w nich
+	U¿ywaj¹c UNION, rozwa¿yæ opcjê ALL
+*/
+
+
+SELECT f.nazwa_skr AS [id firmy], f.nazwa AS [nazwa firmy], AVG(e.pensja) AS [srednia pensja]
+		FROM ETATY e
+		JOIN FIRMY f ON f.nazwa_skr = e.id_firmy
+		GROUP BY f.nazwa_skr, f.nazwa
+UNION ALL
+SELECT f.nazwa_skr AS [id firmy], f.nazwa AS [nazwa firmy], CONVERT(money, null) AS [srednia pensja]
+		FROM FIRMY f
+		WHERE NOT EXISTS (
+							SELECT fW.nazwa_skr, fW.nazwa, ew.id_etatu ,eW.pensja
+									FROM FIRMY fW
+									JOIN ETATY eW ON eW.id_firmy = fW.nazwa_skr
+							WHERE f.nazwa_skr = fW.nazwa_skr
+						)
+
+/*
+	Tworzê zapytanie szukaj¹ce id firmy, nazwê firmy i œredni¹ pensjê w ka¿dej firmie grupuj¹c po id_firmy i nazwie. 
+	Zapytanie to wyœwietli wszystkie firmy, dla których istniej¹ etaty i które posiadaj¹ pewn¹ œredni¹ pensjê.
+
+	Tworzê drugie zapytanie szukaj¹ce id firmy, nazwê firmy i NULL dla sredniej pensji, dla których nie istniej¹ ¿adne etaty.
+
+	Za pomoc¹ operatora UNION ³¹czê ze sob¹ oba zapytania, tak aby wyœwietliæ wszystkie rekordy z dwóch tabel.
+	Do operatora UNION dodaje ALL, gdy¿ wiem, ¿e oba zapytania s¹ roz³¹czne - w 1 pokazujemy firmy, dla których istniej¹ etaty, a w 2 firmy, dla których nie istniej¹ etaty.
+
+	
+	id firmy nazwa firmy                                        srednia pensja
+	-------- -------------------------------------------------- ---------------------
+	appl     Apple                                              10566,6666
+	goog     Google                                             9500,00
+	oran     Orange                                             8600,00
+	pkob     PKO Bank Polski                                    13500,00
+	sams     Samsung                                            15350,00
+	xiai     Xiaiomi                                            9666,6666
+	huaw     Huawei                                             NULL
+	tmob     Tmobile                                            NULL
+
+	(8 row(s) affected)
+*/
+
+
+
+
+/*
+	Z5.2 - to samo co w Z5.1
+	Ale z wykorzystaniem LEFT OUTER
+*/
+
+SELECT f.nazwa_skr AS [id firmy], f.nazwa AS [nazwa firmy], AVG(e.pensja) AS [srednia pensja]
+		FROM FIRMY f
+		LEFT OUTER JOIN ETATY e ON f.nazwa_skr = e.id_firmy
+		GROUP BY f.nazwa_skr, f.nazwa
+
+/*
+	Tworzê wy³¹cznie jedno zapytanie pokazuj¹ce id firmy, nazwê firmy i sredni¹ pensjê.
+	Polecenie LEFT OUTER JOIN ³¹czy z etatami równie¿ takie firmy, dla których nie istniej¹ ¿adne etaty.
+	Sredniej pensji w firmach, dla których nie istniej¹ etaty, przypisana zostaje wartoœæ NULL.
+
+	id firmy nazwa firmy                                        srednia pensja
+	-------- -------------------------------------------------- ---------------------
+	appl     Apple                                              10566,6666
+	goog     Google                                             9500,00
+	huaw     Huawei                                             NULL
+	oran     Orange                                             8600,00
+	pkob     PKO Bank Polski                                    13500,00
+	sams     Samsung                                            15350,00
+	tmob     Tmobile                                            NULL
+	xiai     Xiaiomi                                            9666,6666
+
+	(8 row(s) affected)
+
+*/
+
+
+
+
+/*
+	Z5.3 Napisaæ procedurê pokazuj¹c¹ œredni¹ pensjê w firmach z miasta - parametr procedure @id_miasta
+*/
+GO
+
+CREATE PROCEDURE dbo.P1 (@id_miasta int)
+AS
+	SELECT	m.id_miasta, m.nazwa, AVG(e.pensja) AS [srednia pensja]
+			FROM MIASTA m
+			JOIN FIRMY f ON m.id_miasta = f.id_miasta
+			JOIN ETATY e ON f.nazwa_skr = e.id_firmy
+			WHERE m.id_miasta = @id_miasta
+			GROUP BY m.id_miasta, m.nazwa
+GO
+
+/*
+	Tworzê procedure pobieraj¹c¹ argument @id_miasta typu int
+	Tworzê zapytanie wyszukuj¹ce id miasta, nazwê miasta i œredni¹ pensjê pogrupowan¹ wed³ug id miasta i nazwy miasta.
+	Do zapytania dodaje warunek twierdz¹cy, ¿e id_miasta rekordu ma byæ równe @id_miasta (przekazanemu argumentowi)
+
+	Command(s) completed successfully.
+*/
+
+EXEC P1 2
+
+/*
+	Wywo³ujê procedurê dla przyk³adowego @id_miasta = 2.
+	Procedura pokazuje œredni¹ pensjê dla podanego miasta - Pruszkowa.
+
+	id_miasta   nazwa                                              srednia pensja
+	----------- -------------------------------------------------- ---------------------
+	2           Pruszkow                                           15350,00
+
+	(1 row(s) affected)
+*/
