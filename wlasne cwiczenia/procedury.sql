@@ -674,7 +674,6 @@ SELECT w.kod_woj, w.nazwa
 */
 
 
-
 /*
 Z4 Mateusz, Czarnecki 319030, 2
 
@@ -782,211 +781,125 @@ SELECT  m.id_miasta, m.nazwa AS [nazwa miasta], AVG(e.pensja) AS [srednia pensja
 	(2 rows affected)
 
 */
+GO
+
+SELECT * FROM ETATY
+
+GO
 
 
+ALTER PROCEDURE dbo.test AS
+	UPDATE ETATY SET pensja = ROUND(pensja * 1.1, 2)
+GO
+
+EXEC dbo.test
+
+SELECT * FROM ETATY
+
+GO
+
+ALTER PROCEDURE dbo.KlonujOsoby(@kod_woj nchar(4))
+AS
+	INSERT INTO OSOBY (imie, nazwisko, id_miasta) SELECT o.imie, N'KX_' + o.nazwisko, o.id_miasta
+														FROM OSOBY o
+														JOIN MIASTA m ON (m.id_miasta = o.id_miasta)
+														WHERE m.kod_woj = @kod_woj
+GO
+
+EXEC KlonujOsoby @kod_woj = N'MAZ'
+
+select * from OSOBY
+
+/* Procedura, która zamieni datê na YYYYMM*/
+GO
+
+
+ALTER PROCEDURE D2YYYYMM (@d datetime = null, @ym nchar(6) = null output)
+AS
+	IF @d IS NULL
+		SET @d = GETDATE()
+
+	SET @ym = CONVERT(nchar(6), @d, 112)
+
+GO
+
+DECLARE @ym_loc nchar(6)
+EXEC D2YYYYMM @ym = @ym_loc output
+SELECT @ym_loc AS dyyyymm
 
 
 /*
-	Z5 Mateusz Czarnecki, 319030, 2 
+	UPDATE Tabela SET kol=wart [, kolN=wartN] WHERE WW
 */
 
+IF NOT EXISTS(
+				SELECT c.name
+				FROM sysobjects o
+				JOIN syscolumns c ON o.id = c.id
+				WHERE c.name = N'ILE_OS' AND o.name = N'MIASTA'
+)
+BEGIN
+
+ALTER TABLE MIASTA ADD ILE_OS INT NOT NULL DEFAULT 0
+
+END
+
+select * from miasta
+
+UPDATE MIASTA SET ILE_OS = ILE_OS+1
+	FROM MIASTA 
+	JOIN OSOBY o ON (MIASTA.id_miasta = o.id_miasta)
+
 /*
-	Z5.1 - Pokazaæ firmy wraz ze œredni¹ aktualna pensj¹ w nich
-	U¿ywaj¹c UNION, rozwa¿yæ opcjê ALL
+	UPDATE robimy zawsze po kluczach g³ównych aby jeden wiersz w UPDATE byl aktualizowany tylko jeden raz.
 */
 
+UPDATE MIASTA SET ILE_OS = ISNULL(X.l_os, 0)
+	FROM MIASTA
+	LEFT OUTER
+	JOIN(	SELECT o.id_miasta, COUNT (*) AS l_os
+					FROM OSOBY o
+					GROUP BY o.id_miasta 
+		)	X ON MIASTA.id_miasta = X.id_miasta
 
-SELECT f.nazwa_skr AS [id firmy], f.nazwa AS [nazwa firmy], AVG(e.pensja) AS [srednia pensja]
-		FROM ETATY e
-		JOIN FIRMY f ON f.nazwa_skr = e.id_firmy
-		GROUP BY f.nazwa_skr, f.nazwa
-UNION ALL
-SELECT f.nazwa_skr AS [id firmy], f.nazwa AS [nazwa firmy], CONVERT(money, null) AS [srednia pensja]
-		FROM FIRMY f
-		WHERE NOT EXISTS (
-							SELECT fW.nazwa_skr, fW.nazwa, ew.id_etatu ,eW.pensja
-									FROM FIRMY fW
-									JOIN ETATY eW ON eW.id_firmy = fW.nazwa_skr
-							WHERE f.nazwa_skr = fW.nazwa_skr
-						)
+/*	TRANSAKCJE	*/
+
+BEGIN TRAN podw
+
+UPDATE ETATY SET do = GETDATE() WHERE id_etatu = 1
+INSERT INTO ETATY(pensja, lista poz kol)
+	SELECT(e.pensja * 1.1,2), ... FROM ETATY e WHERE e.id_etatu = 1
+
+COMMIT TRAN podw 
+
+SELECT * FROM ETATY
 
 /*
-	Tworzê zapytanie szukaj¹ce id firmy, nazwê firmy i œredni¹ pensjê w ka¿dej firmie grupuj¹c po id_firmy i nazwie. 
-	Zapytanie to wyœwietli wszystkie firmy, dla których istniej¹ etaty i które posiadaj¹ pewn¹ œredni¹ pensjê.
-
-	Tworzê drugie zapytanie szukaj¹ce id firmy, nazwê firmy i NULL dla sredniej pensji, dla których nie istniej¹ ¿adne etaty.
-
-	Za pomoc¹ operatora UNION ³¹czê ze sob¹ oba zapytania, tak aby wyœwietliæ wszystkie rekordy z dwóch tabel.
-	Do operatora UNION dodaje ALL, gdy¿ wiem, ¿e oba zapytania s¹ roz³¹czne - w 1 pokazujemy firmy, dla których istniej¹ etaty, a w 2 firmy, dla których nie istniej¹ etaty.
-
+	TRIGGER - procedura bazodanowa, która:
 	
-	id firmy nazwa firmy                                        srednia pensja
-	-------- -------------------------------------------------- ---------------------
-	appl     Apple                                              10566,6666
-	goog     Google                                             9500,00
-	oran     Orange                                             8600,00
-	pkob     PKO Bank Polski                                    13500,00
-	sams     Samsung                                            15350,00
-	xiai     Xiaiomi                                            9666,6666
-	huaw     Huawei                                             NULL
-	tmob     Tmobile                                            NULL
+	1) nie ma parametrów
+	2) jest zwi¹zana TYLKO z jedn¹ tabel¹
+	3) mo¿e byæ uruchomiona TYLKO w powi¹zaniu z akcjami na innej tabeli typu INSERT / UPDATE / DELETE
 
-	(8 row(s) affected)
-*/
+	UWAGA - wewn¹trz TRIGGER mamy dostêp do transakcji rozpoczêtej przez SQL
+	np.
+	INSERT INTO WOJ (kod_woj, nazwa) VALUES ('x', 'x')
 
+	jezeli jest trigger na wstawienie do tabeli WOJ to
+	a) SQL rozpocznie transakcje
+	b) SQL wstawi dan¹ do tabeli WOJ
+	c) Wywo³a trigger
+	d) Zakoñczy transkacje
 
-
-
-/*
-	Z5.2 - to samo co w Z5.1
-	Ale z wykorzystaniem LEFT OUTER
-*/
-
-SELECT f.nazwa_skr AS [id firmy], f.nazwa AS [nazwa firmy], AVG(e.pensja) AS [srednia pensja]
-		FROM FIRMY f
-		LEFT OUTER JOIN ETATY e ON f.nazwa_skr = e.id_firmy
-		GROUP BY f.nazwa_skr, f.nazwa
-
-/*
-	Tworzê wy³¹cznie jedno zapytanie pokazuj¹ce id firmy, nazwê firmy i sredni¹ pensjê.
-	Polecenie LEFT OUTER JOIN ³¹czy z etatami równie¿ takie firmy, dla których nie istniej¹ ¿adne etaty.
-	Sredniej pensji w firmach, dla których nie istniej¹ etaty, przypisana zostaje wartoœæ NULL.
-
-	id firmy nazwa firmy                                        srednia pensja
-	-------- -------------------------------------------------- ---------------------
-	appl     Apple                                              10566,6666
-	goog     Google                                             9500,00
-	huaw     Huawei                                             NULL
-	oran     Orange                                             8600,00
-	pkob     PKO Bank Polski                                    13500,00
-	sams     Samsung                                            15350,00
-	tmob     Tmobile                                            NULL
-	xiai     Xiaiomi                                            9666,6666
-
-	(8 row(s) affected)
-
-*/
-
-
-
-
-/*
-	Z5.3 Napisaæ procedurê pokazuj¹c¹ œredni¹ pensjê w firmach z miasta - parametr procedure @id_miasta
+	CREATE TRIGGER dbo.Nazwa ON Tabela FOR [insert / update / delete]
 */
 GO
-
-CREATE PROCEDURE dbo.P1 (@id_miasta int)
+CREATE TRIGGER dbo.TR_woj_ins ON WOJ FOR INSERT
 AS
-	SELECT	m.id_miasta, m.nazwa, AVG(e.pensja) AS [srednia pensja]
-			FROM MIASTA m
-			JOIN FIRMY f ON m.id_miasta = f.id_miasta
-			JOIN ETATY e ON f.nazwa_skr = e.id_firmy
-			WHERE m.id_miasta = @id_miasta
-			GROUP BY m.id_miasta, m.nazwa
+	RAISERROR(N'WETO !! nie pozwalam', 16, 3)
+	ROLLBACK TRAN
 GO
 
-/*
-	Tworzê procedure pobieraj¹c¹ argument @id_miasta typu int
-	Tworzê zapytanie wyszukuj¹ce id miasta, nazwê miasta i œredni¹ pensjê pogrupowan¹ wed³ug id miasta i nazwy miasta.
-	Do zapytania dodaje warunek twierdz¹cy, ¿e id_miasta rekordu ma byæ równe @id_miasta (przekazanemu argumentowi)
+DROP TRIGGER TR_woj_ins
 
-	Command(s) completed successfully.
-*/
-
-EXEC P1 2
-
-/*
-	Wywo³ujê procedurê dla przyk³adowego @id_miasta = 2.
-	Procedura pokazuje œredni¹ pensjê dla podanego miasta - Pruszkowa.
-
-	id_miasta   nazwa                                              srednia pensja
-	----------- -------------------------------------------------- ---------------------
-	2           Pruszkow                                           15350,00
-
-	(1 row(s) affected)
-*/
-
-
-
-/* Z6 Mateusz, Czarnecki, 2, 319030
-**
-** 3 regu³y tworzenia TRIGGERA
-** R1 - Trigger nie mo¿e aktualizowaæ CALEJ tabeli a co najwy¿ej elementy zmienione
-** R2 - Trigger mo¿e wywo³aæ sam siebie - uzysamy nieskoñczon¹ rekurencjê == stack overflow
-** R3 - Zawsze zakladamy, ¿e wstawiono / zmodyfikowano / skasowano wiecej jak 1 rekord
-**
-** Z1: Napisaæ trigger, który bêdzie usuwa³ spacje z pola nazwisko
-** Trigger na INSERT, UPDATE
-** UWAGA !! Trigger bêdzie robi³ UPDATE na polu NAZWISKO
-** To grozi REKURENCJ¥ i przepelnieniem stosu
-** Dlatego trzeba bêdzie sprawdzaæ UPDATE(nazwisko) i sprawdzaæ czy we
-** wstawionych rekordach by³y spacje i tylko takowe poprawiaæ (ze spacjami w nazwisku)
-**
-*/
-
-GO
-CREATE TRIGGER dbo.tr_nazwisko ON OSOBY FOR INSERT, UPDATE
-AS
-	IF UPDATE(nazwisko)
-	AND EXISTS (
-					SELECT * FROM OSOBY o 
-					WHERE o.nazwisko LIKE  N'% %'
-				)
-		UPDATE OSOBY SET nazwisko = REPLACE(nazwisko, N' ', N'-')
-		WHERE nazwisko IN 
-		(
-			SELECT o.nazwisko
-			FROM OSOBY o
-			WHERE o.nazwisko LIKE N'% %'
-		)
-GO
-
-/*
-	Command(s) completed successfully.
-
-	Tworzê TRIGGER dzia³aj¹cy pod warunkiem wstawienia nowego lub edytowania nazwiska i dla nazwisk, które posiadaj¹ spacjê. 
-	Edytuje wykryte rekordy pod warunkiem, ¿e posiadaj¹ spacjê.
-*/
-
-UPDATE OSOBY SET OSOBY.nazwisko = N'Nowak Salomon'
-		WHERE OSOBY.id_osoby = 2
-
-UPDATE OSOBY SET OSOBY.nazwisko = 'Barbik W¹sacz'
-		WHERE OSOBY.id_osoby = 3
-
-/*
-	Przy edytowaniu rekordu, osoby, którym próbujemy wstawiæ nazwisko ze spacj¹, spacja zostanie zamieniona na "-".
-
-	id_osoby    id_miasta   imie                                               nazwisko
-	----------- ----------- -------------------------------------------------- --------------------------------------------------
-	2           4           Adam                                               Nowak-Salomon
-	3           7           Ferdynand                                          Barbik-W¹sacz
-
-*/
-
-/*
-** Z2: Napisaæ procedurê szukaj¹c¹ osób z paramertrami
-** @imie_wzor nvarchar(20) = NULL
-** @nazwisko_wzor nvarchar(20) = NULL
-** @pokaz_zarobki bit = 0
-** Procedura ma mieæ zmienn¹ @sql nvarchar(1000), któr¹ buduje dynamicznie
-** @pokaz_zarobki = 0 => (imie, nazwisko, id_osoby, nazwa_miasta)
-** @pokaz_zarobki = 1 => (imie, nazwisko, id_osoby, suma_z_akt_etatow)
-** Mozliwe wywo³ania: EXEC sz_o @nazwisko_wzor = N'Stodolsk%'
-** powinno zbudowaæ zmienn¹ tekstow¹
-** @sql = N'SELECT o.*, m.nazwa AS nazwa_miasta FROM osoby o join miasta m "
-** + N' ON (m.id_miasta=o.id_miasta) WHERE o.nazwisko LIKE NStodolsk% '
-** uruchomienie zapytania to EXEC sp_sqlExec @sql
-** rekomendujê aby najpierw procedura zwraca³a zapytanie SELECT @sql
-** a dopiero jak bêd¹ poprawne uruachamia³a je
-*/
-
-UPDATE OSOBY SET OSOBY.nazwisko = N'Kowalski'
-
-SELECT * FROM OSOBY
-/* SELECT * INTO osoby_bk FROM osoby o */
-
-UPDATE OSOBY SET OSOBY.nazwisko = b.nazwisko
-		FROM OSOBY JOIN osoby_bk b ON OSOBY.id_osoby = b.id_osoby
-
-
+INSERT INTO WOJ (kod_woj, nazwa) VALUES ('x', 'x')
