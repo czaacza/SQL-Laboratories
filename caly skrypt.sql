@@ -2,18 +2,18 @@
 /*
 Z2, Mateusz Czarnecki, 2, 319030
 
-1. Pokazaæ dane podstawowe osoby, w jakim mieœcie mieszka i w jakim to jest województwie
+1. Pokazaï¿½ dane podstawowe osoby, w jakim mieï¿½cie mieszka i w jakim to jest wojewï¿½dztwie
 
-2. Pokazaæ wszystkie osoby o nazwisku na literê M i ostatniej literze nazwiska i lub a
-(je¿eli nie macie takowych to wybierzcie takie warunki - inn¹ literê pocz¹tkow¹ i inne 2 koñcowe)
-które maj¹ pensje pomiêdzy 3000 a 5000 (te¿ mo¿ecie zmieniæ je¿eli macie g³ownie inne zakresy)
-mieszkajace w innym mieœcie ni¿ znajduje siê firma, w której maj¹ etat
-(wystarcz¹ dane z tabel etaty, firmy, osoby , miasta)
+2. Pokazaï¿½ wszystkie osoby o nazwisku na literï¿½ M i ostatniej literze nazwiska i lub a
+(jeï¿½eli nie macie takowych to wybierzcie takie warunki - innï¿½ literï¿½ poczï¿½tkowï¿½ i inne 2 koï¿½cowe)
+ktï¿½re majï¿½ pensje pomiï¿½dzy 3000 a 5000 (teï¿½ moï¿½ecie zmieniï¿½ jeï¿½eli macie gï¿½ownie inne zakresy)
+mieszkajace w innym mieï¿½cie niï¿½ znajduje siï¿½ firma, w ktï¿½rej majï¿½ etat
+(wystarczï¿½ dane z tabel etaty, firmy, osoby , miasta)
 
-3. Pokazaæ kto ma najd³u¿sze nazwisko w bazie
-(najpierw szukamy MAX z LEN(nazwisko) a potem pokazujemy te osoby z tak¹ d³ugoœci¹ nazwiska)
+3. Pokazaï¿½ kto ma najdï¿½uï¿½sze nazwisko w bazie
+(najpierw szukamy MAX z LEN(nazwisko) a potem pokazujemy te osoby z takï¿½ dï¿½ugoï¿½ciï¿½ nazwiska)
 
-4. Policzyæ liczbê osób w mieœcie o nazwie (tu dajê Wam wybór - w którym mieœcie macie najwiêcej)
+4. Policzyï¿½ liczbï¿½ osï¿½b w mieï¿½cie o nazwie (tu dajï¿½ Wam wybï¿½r - w ktï¿½rym mieï¿½cie macie najwiï¿½cej)
 
 */
 
@@ -36,7 +36,7 @@ GO
 
 /* 
 	Commands completed successfully.
-	Polecenia s³u¿¹ce do czyszczenia wszystkich tabel przy uruchomieniu skryptu 
+	Polecenia sï¿½uï¿½ï¿½ce do czyszczenia wszystkich tabel przy uruchomieniu skryptu 
 */
 
 CREATE TABLE dbo.WOJ 
@@ -46,7 +46,7 @@ CREATE TABLE dbo.WOJ
 
 /*
 	Commands completed successfully.
-	Tworzymy tabele WOJ, zawieraj¹c¹ kod_woj jako klucz g³ówny oraz nazwê 
+	Tworzymy tabele WOJ, zawierajï¿½cï¿½ kod_woj jako klucz gï¿½ï¿½wny oraz nazwï¿½ 
 */
 
 GO
@@ -60,7 +60,7 @@ CREATE TABLE dbo.MIASTA
 
 /*
 	Commands completed successfully.
-	Tworzymy tabele MIASTA, zawieraj¹c¹ id_miasta jako klucz g³ówny inkrementuj¹cy wartoœæ, nazwê oraz klucz obcy kod_woj
+	Tworzymy tabele MIASTA, zawierajï¿½cï¿½ id_miasta jako klucz gï¿½ï¿½wny inkrementujï¿½cy wartoï¿½ï¿½, nazwï¿½ oraz klucz obcy kod_woj
 */
 
 GO
@@ -78,7 +78,7 @@ CREATE TABLE dbo.OSOBY
 
 /*
 	Commands completed successfully.
-	Tworzymy tabele OSOBY, zawieraj¹c¹ id_osoby jako klucz g³ówny inkrementuj¹cy wartoœæ, klucz obcy id_miasta, imie i nazwisko
+	Tworzymy tabele OSOBY, zawierajï¿½cï¿½ id_osoby jako klucz gï¿½ï¿½wny inkrementujï¿½cy wartoï¿½ï¿½, klucz obcy id_miasta, imie i nazwisko
 */
 
 GO
@@ -95,7 +95,7 @@ CREATE TABLE dbo.FIRMY
 
 /*
 	Commands completed successfully.
-	Tworzymy tabele FIRMY, zawieraj¹c¹ nazwa_skr jako klucz g³ówny, klucz obcy id_miasta, imie i nazwisko, nazwê, kod_pocztowy i ulicê
+	Tworzymy tabele FIRMY, zawierajï¿½cï¿½ nazwa_skr jako klucz gï¿½ï¿½wny, klucz obcy id_miasta, imie i nazwisko, nazwï¿½, kod_pocztowy i ulicï¿½
 */
 
 
@@ -114,7 +114,7 @@ CREATE TABLE dbo.ETATY
 
 /*
 	Commands completed successfully.
-	Tworzymy tabele ETATY, zawieraj¹c¹ id_etatu jako klucz g³ówny inkrementuj¹cy wartoœæ, klucz obcy id_osoby, klucz obcy id_firmy, stanowisko, pensje oraz daty od, do
+	Tworzymy tabele ETATY, zawierajï¿½cï¿½ id_etatu jako klucz gï¿½ï¿½wny inkrementujï¿½cy wartoï¿½ï¿½, klucz obcy id_osoby, klucz obcy id_firmy, stanowisko, pensje oraz daty od, do
 */
 
 
@@ -148,7 +148,7 @@ DECLARE @id_wa int , @id_pr int , @id_wr int , @id_po int , @id_mi int , @id_wl 
 
 /* 
 	Commands completed successfully.
-	Deklarujemy zmienne, które wykorzystamy do przechowywania id miast
+	Deklarujemy zmienne, ktï¿½re wykorzystamy do przechowywania id miast
 */
 
 
@@ -204,7 +204,7 @@ SET @id_wi = SCOPE_IDENTITY()
 	11          Krakow                                             malo
 	12          Wieliczka                                          malo
 
-	Ustawiamy id miasta pod ka¿d¹ zmienn¹ za pomoc¹ polecenia SET - 12 miast, w dwóch województwach brak miast
+	Ustawiamy id miasta pod kaï¿½dï¿½ zmiennï¿½ za pomocï¿½ polecenia SET - 12 miast, w dwï¿½ch wojewï¿½dztwach brak miast
 */
 
 
@@ -213,7 +213,7 @@ DECLARE @id_jk int, @id_ak int, @id_fk int, @id_ab int, @id_ks int, @id_kl int, 
 
 /* 
 	Commands completed successfully.
-	Deklarujemy zmienne, które wykorzystamy do przechowywania id osób
+	Deklarujemy zmienne, ktï¿½re wykorzystamy do przechowywania id osï¿½b
 */
 
 INSERT INTO OSOBY (id_miasta, imie, nazwisko)	VALUES (@id_wa , N'Man', N'Kowalski')
@@ -276,7 +276,7 @@ SET @id_akaf = SCOPE_IDENTITY()
 	13          12          Robert                                             Pudzianowski
 	14          2           Anna                                               Kafelek
 
-	Deklarujemy zmienne, które wykorzystamy do przechowywania id osób za pomoc¹ polecenia SET - 14 osób, jedno miasto bez osoby
+	Deklarujemy zmienne, ktï¿½re wykorzystamy do przechowywania id osï¿½b za pomocï¿½ polecenia SET - 14 osï¿½b, jedno miasto bez osoby
 */
 
 
@@ -301,7 +301,7 @@ INSERT INTO FIRMY(nazwa_skr ,id_miasta, nazwa, kod_pocztowy, ulica)	VALUES (N'tm
 	tmob      7           Tmobile                                            59200        Czeslawska
 	xiai      8           Xiaiomi                                            62800        Tarasowska
 
-	Dodajemy rekordy do tabeli FIRMY pos³uguj¹c siê zmiennymi przechowuj¹cymi id miast - 8 firm, 
+	Dodajemy rekordy do tabeli FIRMY posï¿½ugujï¿½c siï¿½ zmiennymi przechowujï¿½cymi id miast - 8 firm, 
 */
 
 
@@ -351,7 +351,7 @@ INSERT INTO ETATY(id_osoby, id_firmy, stanowisko, pensja, od, do) VALUES (@id_ak
 	2           sams     Java Developer                                     11500,00              2002-09-14 00:00:00.000 2007-10-02 00:00:00.000 19
 	14          pkob     Project Menager                                    21000,00              2008-05-21 00:00:00.000 2020-02-13 00:00:00.000 20
 
-	Dodajemy rekordy do tabeli ETATY pos³uguj¹c siê zmiennymi przechowuj¹cymi id osób - 20 etatów, dwie firmy bez ¿adnych etatów
+	Dodajemy rekordy do tabeli ETATY posï¿½ugujï¿½c siï¿½ zmiennymi przechowujï¿½cymi id osï¿½b - 20 etatï¿½w, dwie firmy bez ï¿½adnych etatï¿½w
 */
 
 SELECT * FROM WOJ
@@ -361,7 +361,7 @@ SELECT * FROM FIRMY
 SELECT * FROM ETATY
 
 /*
-	Wyœwietlamy wszystkie rekordy z wszysktich tabel
+	Wyï¿½wietlamy wszystkie rekordy z wszysktich tabel
 */
 
 /* 
@@ -394,14 +394,14 @@ SELECT * FROM ETATY
 
 */
 
-/* 1. Pokazaæ dane podstawowe osoby, w jakim mieœcie mieszka i w jakim to jest województwie */
+/* 1. Pokazaï¿½ dane podstawowe osoby, w jakim mieï¿½cie mieszka i w jakim to jest wojewï¿½dztwie */
 
-SELECT o.imie, o.nazwisko, m.nazwa AS miasto, w.nazwa AS województwo FROM OSOBY o 
+SELECT o.imie, o.nazwisko, m.nazwa AS miasto, w.nazwa AS wojewï¿½dztwo FROM OSOBY o 
 join MIASTA m ON (o.id_miasta = m.id_miasta)
 join WOJ w ON (m.kod_woj = w.kod_woj)
 
 /*
-	imie                                               nazwisko                                           miasto                                             województwo
+	imie                                               nazwisko                                           miasto                                             wojewï¿½dztwo
 	-------------------------------------------------- -------------------------------------------------- -------------------------------------------------- --------------------------------------------------
 	Jan                                                Kowalski                                           Warszawa                                           Mazowieckie
 	Adam                                               Nowak                                              Poznan                                             Wielkopolskie
@@ -420,11 +420,11 @@ join WOJ w ON (m.kod_woj = w.kod_woj)
 */
 
 /*
-	2. Pokazaæ wszystkie osoby o nazwisku na literê M i ostatniej literze nazwiska i lub a
-	(je¿eli nie macie takowych to wybierzcie takie warunki - inn¹ literê pocz¹tkow¹ i inne 2 koñcowe)
-	które maj¹ pensje pomiêdzy 3000 a 5000 (te¿ mo¿ecie zmieniæ je¿eli macie g³ownie inne zakresy)
-	mieszkajace w innym mieœcie ni¿ znajduje siê firma, w której maj¹ etat
-	(wystarcz¹ dane z tabel etaty, firmy, osoby , miasta)
+	2. Pokazaï¿½ wszystkie osoby o nazwisku na literï¿½ M i ostatniej literze nazwiska i lub a
+	(jeï¿½eli nie macie takowych to wybierzcie takie warunki - innï¿½ literï¿½ poczï¿½tkowï¿½ i inne 2 koï¿½cowe)
+	ktï¿½re majï¿½ pensje pomiï¿½dzy 3000 a 5000 (teï¿½ moï¿½ecie zmieniï¿½ jeï¿½eli macie gï¿½ownie inne zakresy)
+	mieszkajace w innym mieï¿½cie niï¿½ znajduje siï¿½ firma, w ktï¿½rej majï¿½ etat
+	(wystarczï¿½ dane z tabel etaty, firmy, osoby , miasta)
 */
 
 SELECT o.imie, o.nazwisko, e.pensja, mF.nazwa AS adres_firmy, mO.nazwa AS zamieszkanie FROM osoby o		
@@ -446,8 +446,8 @@ SELECT o.imie, o.nazwisko, e.pensja, mF.nazwa AS adres_firmy, mO.nazwa AS zamies
 
 
 /*
-	3. Pokazaæ kto ma najd³u¿sze nazwisko w bazie
-	(najpierw szukamy MAX z LEN(nazwisko) a potem pokazujemy te osoby z tak¹ d³ugoœci¹ nazwiska)
+	3. Pokazaï¿½ kto ma najdï¿½uï¿½sze nazwisko w bazie
+	(najpierw szukamy MAX z LEN(nazwisko) a potem pokazujemy te osoby z takï¿½ dï¿½ugoï¿½ciï¿½ nazwiska)
 */
 
 IF OBJECT_ID(N'temp.#M') IS NOT NULL
@@ -463,7 +463,7 @@ select o.imie, o.nazwisko, m.dlugosc FROM OSOBY o join #M m ON (m.id_osoby = o.i
 where m.dlugosc = MAX(LEN(o.nazwisko))
 
 
-/* 4. Policzyæ liczbê osób w mieœcie o nazwie (tu dajê Wam wybór - w którym mieœcie macie najwiêcej) */
+/* 4. Policzyï¿½ liczbï¿½ osï¿½b w mieï¿½cie o nazwie (tu dajï¿½ Wam wybï¿½r - w ktï¿½rym mieï¿½cie macie najwiï¿½cej) */
 
 SELECT COUNT(DISTINCT o.id_osoby)  FROM OSOBY o join MIASTA m ON m.id_miasta = o.id_miasta
 WHERE m.nazwa= N'Milanowek'
@@ -514,8 +514,8 @@ SELECT	COUNT(*) AS [ile etatow w firmie],
 
 /* Z3, Mateusz, Czarnecki, 2 319030
 
-	Z3.1 - policzyæ liczbê osób w ka¿dym mieœcie (zapytanie z grupowaniem)
-	Najlepiej wynik zapamiêtaæ w tabeli tymczasowej
+	Z3.1 - policzyï¿½ liczbï¿½ osï¿½b w kaï¿½dym mieï¿½cie (zapytanie z grupowaniem)
+	Najlepiej wynik zapamiï¿½taï¿½ w tabeli tymczasowej
 
 */
 
@@ -526,7 +526,7 @@ SELECT	COUNT(*) AS [liczba osob],
 		JOIN OSOBY o ON m.id_miasta = o.id_miasta
 		GROUP BY m.nazwa
 		
-/* Tworzê zapytanie licz¹ce liczbê wystêpuj¹cych rekordów pogrupowanych wed³ug nazwy miasta, wynik wrzucam do tabeli tymczasowej #TT
+/* Tworzï¿½ zapytanie liczï¿½ce liczbï¿½ wystï¿½pujï¿½cych rekordï¿½w pogrupowanych wedï¿½ug nazwy miasta, wynik wrzucam do tabeli tymczasowej #TT
 
 	liczba osob nazwa miasta
 	----------- --------------------------------------------------
@@ -547,24 +547,24 @@ SELECT	COUNT(*) AS [liczba osob],
 
 
 /*
-	Z3.2 - korzystaj¹c z wyniku Z3,1 - pokazaæ, które miasto ma najwiêksz¹ liczbê mieszkañców
-	(zapytanie z fa - analogiczne do zadañ z Z2)
+	Z3.2 - korzystajï¿½c z wyniku Z3,1 - pokazaï¿½, ktï¿½re miasto ma najwiï¿½kszï¿½ liczbï¿½ mieszkaï¿½cï¿½w
+	(zapytanie z fa - analogiczne do zadaï¿½ z Z2)
 */
 
-/* PIERWSZY SPOSÓB (U¯YWAJ¥C FA) */
+/* PIERWSZY SPOSï¿½B (Uï¿½YWAJï¿½C FA) */
 
 /*SELECT MAX(t.[liczba osob]) AS [maksymalna liczba osob]
 	INTO #M
 	FROM #TT t
 */
 /*
-	Tworzymy tabelê o postaci:
+	Tworzymy tabelï¿½ o postaci:
 
 	maksymalna liczba osob
 	----------------------
 	3
 
-	zawieraj¹c¹ wy³¹cznie najwiêksz¹ liczbê osób. Przechowujemy j¹ w postaci tabeli tymczasowej #M
+	zawierajï¿½cï¿½ wyï¿½ï¿½cznie najwiï¿½kszï¿½ liczbï¿½ osï¿½b. Przechowujemy jï¿½ w postaci tabeli tymczasowej #M
 
 */
 
@@ -573,8 +573,8 @@ SELECT	COUNT(*) AS [liczba osob],
 		JOIN #TT t ON t.[liczba osob] = m.[maksymalna liczba osob]
 */
 /* 
-	Tworzymy zapytanie ³¹cz¹ce tabelê z zadania 1 z tabel¹ przechowuj¹c¹ najwiêksz¹ liczbê mieszkañców. 
-	Otrzymujemy tabelê przechowuj¹c¹ nazwê i liczbe osób w mieœcie z najwiêksz¹ liczb¹ mieszkañców
+	Tworzymy zapytanie ï¿½ï¿½czï¿½ce tabelï¿½ z zadania 1 z tabelï¿½ przechowujï¿½cï¿½ najwiï¿½kszï¿½ liczbï¿½ mieszkaï¿½cï¿½w. 
+	Otrzymujemy tabelï¿½ przechowujï¿½cï¿½ nazwï¿½ i liczbe osï¿½b w mieï¿½cie z najwiï¿½kszï¿½ liczbï¿½ mieszkaï¿½cï¿½w
 
 	nazwa miasta                                       liczba osob
 	-------------------------------------------------- -----------
@@ -583,7 +583,7 @@ SELECT	COUNT(*) AS [liczba osob],
 
 
 
-/* DRUGI SPOSÓB (U¯YWAJ¥C CURSORA) */
+/* DRUGI SPOSï¿½B (Uï¿½YWAJï¿½C CURSORA) */
 
 DECLARE @mlo int
 DECLARE @mna varchar(20)
@@ -606,12 +606,12 @@ CLOSE CC
 DEALLOCATE CC
 
 /*
-	Deklarujê zmienne @mlo, @mla. Tworzê kursor CC, który wrzuci do zmiennych wartoœci maksymalnej liczby osob w danym miescie oraz nazwê miasta z najwiêksz¹ liczb¹ osób
-	Dzieje siê tak ze wzglêdu na polecenie ORDER BY 1 DESC, które porz¹dkuje wyniki w tabeli tymczasowej malej¹co wed³ug liczby osób, zatem pierwszy rekord przedstawiaæ bêdzie miasto z najwiêksz¹ liczb¹ osób
-	Nastêpnie u¿ywam polecenia SELECT aby pokazaæ zmienne, do których przekazane zosta³y wartoœci.
-	Na samym koñcu zamykam i zwalniam pamiêæ po kursorze.
+	Deklarujï¿½ zmienne @mlo, @mla. Tworzï¿½ kursor CC, ktï¿½ry wrzuci do zmiennych wartoï¿½ci maksymalnej liczby osob w danym miescie oraz nazwï¿½ miasta z najwiï¿½kszï¿½ liczbï¿½ osï¿½b
+	Dzieje siï¿½ tak ze wzglï¿½du na polecenie ORDER BY 1 DESC, ktï¿½re porzï¿½dkuje wyniki w tabeli tymczasowej malejï¿½co wedï¿½ug liczby osï¿½b, zatem pierwszy rekord przedstawiaï¿½ bï¿½dzie miasto z najwiï¿½kszï¿½ liczbï¿½ osï¿½b
+	Nastï¿½pnie uï¿½ywam polecenia SELECT aby pokazaï¿½ zmienne, do ktï¿½rych przekazane zostaï¿½y wartoï¿½ci.
+	Na samym koï¿½cu zamykam i zwalniam pamiï¿½ï¿½ po kursorze.
 
-	Sposób ten bêdzie wadliwy dla dwóch rekordów o takiej samej, najwiêkszej liczbie mieszkañców miasta.
+	Sposï¿½b ten bï¿½dzie wadliwy dla dwï¿½ch rekordï¿½w o takiej samej, najwiï¿½kszej liczbie mieszkaï¿½cï¿½w miasta.
 
 
 	maksymalna liczba osob nazwa miasta
@@ -622,7 +622,7 @@ DEALLOCATE CC
 
 
 /*
-	Z3.3 Pokazaæ liczbê firm w ka¿dym z województw (czyli grupowanie po kod_woj)
+	Z3.3 Pokazaï¿½ liczbï¿½ firm w kaï¿½dym z wojewï¿½dztw (czyli grupowanie po kod_woj)
 */
 
 SELECT	w.kod_woj, w.nazwa AS [nazwa wojewodztwa],
@@ -633,7 +633,7 @@ SELECT	w.kod_woj, w.nazwa AS [nazwa wojewodztwa],
 		GROUP BY w.kod_woj, w.nazwa
 
 /*
-	Tworzymy tabelê zawieraj¹c¹ informacjê o liczbie firm w danym województwie o postaci:
+	Tworzymy tabelï¿½ zawierajï¿½cï¿½ informacjï¿½ o liczbie firm w danym wojewï¿½dztwie o postaci:
 
 	kod_woj nazwa wojewodztwa                                  liczba firm
 	------- -------------------------------------------------- -----------
@@ -641,16 +641,16 @@ SELECT	w.kod_woj, w.nazwa AS [nazwa wojewodztwa],
 	mazo    Mazowieckie                                        3
 	wiel    Wielkopolskie                                      2
 
-	Osi¹gamy to poprzez operator GROUP BY, który grupuje nam dane w tabelii wed³ug klucza g³ównego w.kod_woj oraz nazwy województwa
+	Osiï¿½gamy to poprzez operator GROUP BY, ktï¿½ry grupuje nam dane w tabelii wedï¿½ug klucza gï¿½ï¿½wnego w.kod_woj oraz nazwy wojewï¿½dztwa
  */
 
 
 
 
 /*
-	Z3.4 Pokazaæ województwa w których nie ma ¿adnej firmy
+	Z3.4 Pokazaï¿½ wojewï¿½dztwa w ktï¿½rych nie ma ï¿½adnej firmy
 
-	(suma z3.3 i z3.4 powinna daæ nam pe³n¹ listê województw - woj gdzie sa firmy i gdzie ich nie ma to razem powinny byc wszystkie
+	(suma z3.3 i z3.4 powinna daï¿½ nam peï¿½nï¿½ listï¿½ wojewï¿½dztw - woj gdzie sa firmy i gdzie ich nie ma to razem powinny byc wszystkie
 */
 
 SELECT w.kod_woj, w.nazwa
@@ -663,8 +663,8 @@ SELECT w.kod_woj, w.nazwa
 		)
 
 /*	
-	Pos³uguj¹c siê operatorem NOT EXISTS, szukam kod_woj i nazw województw, dla których nie istniej¹ rekordy dla zapytania ³¹cz¹cego firmy z województwami. 
-	W ten sposób otrzymujê listê województw, w których nie ma ¿adnej firmy
+	Posï¿½ugujï¿½c siï¿½ operatorem NOT EXISTS, szukam kod_woj i nazw wojewï¿½dztw, dla ktï¿½rych nie istniejï¿½ rekordy dla zapytania ï¿½ï¿½czï¿½cego firmy z wojewï¿½dztwami. 
+	W ten sposï¿½b otrzymujï¿½ listï¿½ wojewï¿½dztw, w ktï¿½rych nie ma ï¿½adnej firmy
 
 	kod_woj nazwa
 	------- --------------------------------------------------
@@ -678,8 +678,8 @@ SELECT w.kod_woj, w.nazwa
 /*
 Z4 Mateusz, Czarnecki 319030, 2
 
-	Z4.1 - pokazaæ osoby z województwa o kodzie X, które nigdy
-	nie pracowa³y / nie pracuja tez obecnie w firmie z woj o tym samym kodzie
+	Z4.1 - pokazaï¿½ osoby z wojewï¿½dztwa o kodzie X, ktï¿½re nigdy
+	nie pracowaï¿½y / nie pracuja tez obecnie w firmie z woj o tym samym kodzie
 	(lub innym - jakie dane lepsze)
 */
 
@@ -699,9 +699,9 @@ SELECT o.id_osoby, LEFT(o.imie, 20) AS [imie], LEFT(o.nazwisko, 20) AS [nazwisko
 			WHERE o.id_osoby = oW.id_osoby AND w.kod_woj = wW.kod_woj
 		 )
 /* 
-	Tworze zapytanie szukaj¹ce id_osoby, imienia i nazwiska osób mieszkaj¹cych w pewnym województwie.
-	W zapytaniu wewn¹trz NOT EXISTS szukam danych osób spe³niaj¹cych warunek, ¿e kod_woj osoby = kod_woj firmy, w której osoba pracuje/pracowa³a.
-	Poleceniem WHERE NOT EXISTS, sprawiam, ¿e wyœwietl¹ siê tylko rekordy, które NIE SPE£NIAJ¥ zapytania wewnêtrznego, zatem osoby, których kod_woj zamieszkania jest RÓ¯NY od kod_woj firmy.
+	Tworze zapytanie szukajï¿½ce id_osoby, imienia i nazwiska osï¿½b mieszkajï¿½cych w pewnym wojewï¿½dztwie.
+	W zapytaniu wewnï¿½trz NOT EXISTS szukam danych osï¿½b speï¿½niajï¿½cych warunek, ï¿½e kod_woj osoby = kod_woj firmy, w ktï¿½rej osoba pracuje/pracowaï¿½a.
+	Poleceniem WHERE NOT EXISTS, sprawiam, ï¿½e wyï¿½wietlï¿½ siï¿½ tylko rekordy, ktï¿½re NIE SPEï¿½NIAJï¿½ zapytania wewnï¿½trznego, zatem osoby, ktï¿½rych kod_woj zamieszkania jest RÓ¯NY od kod_woj firmy.
 
 
 	id_osoby    imie                 nazwisko
@@ -720,8 +720,8 @@ SELECT o.id_osoby, LEFT(o.imie, 20) AS [imie], LEFT(o.nazwisko, 20) AS [nazwisko
 
 
 /*
-	Z4.2 - pokazaæ liczbê mieszkañców w województwach
-	ale tylko w tych maj¹cych wiecej jak jednego (DWÓCH) mieszkañca
+	Z4.2 - pokazaï¿½ liczbï¿½ mieszkaï¿½cï¿½w w wojewï¿½dztwach
+	ale tylko w tych majï¿½cych wiecej jak jednego (DWï¿½CH) mieszkaï¿½ca
 */
 
 
@@ -735,12 +735,12 @@ SELECT w.kod_woj, tt.nazwa, tt.[liczba mieszkancow]
 	WHERE tt.[liczba mieszkancow] > 2
 
 /*
-	Zamiast waurnku liczby mieszkañców wiêkszej od 1, chcê aby pokazano mi dane dla liczby mieszkañców wiêkszej od 2, gdy¿ taki warunek umo¿liwi³ mi odró¿nienie od bezwarunkowego zapytania. 
-	(wszystkie miasta w tabeli mia³y wiêcej ni¿ 1 mieszkañca, a nie wszystkie wiêcej ni¿ 2)
+	Zamiast waurnku liczby mieszkaï¿½cï¿½w wiï¿½kszej od 1, chcï¿½ aby pokazano mi dane dla liczby mieszkaï¿½cï¿½w wiï¿½kszej od 2, gdyï¿½ taki warunek umoï¿½liwiï¿½ mi odrï¿½nienie od bezwarunkowego zapytania. 
+	(wszystkie miasta w tabeli miaï¿½y wiï¿½cej niï¿½ 1 mieszkaï¿½ca, a nie wszystkie wiï¿½cej niï¿½ 2)
 
-	Tworzê zapytanie szukaj¹ce kod_woj, nazwy oraz iloœci wyœwietlanych rekordów osób.
-	Tworzê zapytanie wewnêtrzne szukaj¹ce kod_woj, nazwê i liczbê mieszkañców, pogrupowane po kod_woj i nazwie.
-	Dajê warunek, w którym liczba mieszkañców z tabeli wewnêtrznej ma byæ wiêksza od 2.
+	Tworzï¿½ zapytanie szukajï¿½ce kod_woj, nazwy oraz iloï¿½ci wyï¿½wietlanych rekordï¿½w osï¿½b.
+	Tworzï¿½ zapytanie wewnï¿½trzne szukajï¿½ce kod_woj, nazwï¿½ i liczbï¿½ mieszkaï¿½cï¿½w, pogrupowane po kod_woj i nazwie.
+	Dajï¿½ warunek, w ktï¿½rym liczba mieszkaï¿½cï¿½w z tabeli wewnï¿½trznej ma byï¿½ wiï¿½ksza od 2.
 
 	kod_woj nazwa                liczba mieszkancow
 	------- -------------------- ------------------
@@ -753,8 +753,8 @@ SELECT w.kod_woj, tt.nazwa, tt.[liczba mieszkancow]
 
 
 /*
-	Z4.3 - pokazaæ sredni¹ pensjê w miastach
-	ale tylko tych posiadaj¹cych wiêcej jak jednego mieszkañca
+	Z4.3 - pokazaï¿½ sredniï¿½ pensjï¿½ w miastach
+	ale tylko tych posiadajï¿½cych wiï¿½cej jak jednego mieszkaï¿½ca
 */
 
 
@@ -770,8 +770,8 @@ SELECT  m.id_miasta, m.nazwa AS [nazwa miasta], AVG(e.pensja) AS [srednia pensja
 		GROUP BY m.id_miasta, m.nazwa
 
 /*
-	Tworzê zapytanie wewnêtrzne pokazuj¹ce id_miasta i liczbê mieszkañców w danym mieœcie. U¿ywam do tego operatora COUNT(*) oraz grupuje rekordy po id_miasta.
-	W zapytaniu zewnêtrznym szukam id_miasta, nazwy miasta i œredniej pensji w miastach. Dziêki do³¹czeniu tabeli zawieraj¹cej liczbê mieszkañców, mogê daæ warunek mówi¹cy, ¿e ma byæ ona wiêksza od 1.
+	Tworzï¿½ zapytanie wewnï¿½trzne pokazujï¿½ce id_miasta i liczbï¿½ mieszkaï¿½cï¿½w w danym mieï¿½cie. Uï¿½ywam do tego operatora COUNT(*) oraz grupuje rekordy po id_miasta.
+	W zapytaniu zewnï¿½trznym szukam id_miasta, nazwy miasta i ï¿½redniej pensji w miastach. Dziï¿½ki doï¿½ï¿½czeniu tabeli zawierajï¿½cej liczbï¿½ mieszkaï¿½cï¿½w, mogï¿½ daï¿½ warunek mï¿½wiï¿½cy, ï¿½e ma byï¿½ ona wiï¿½ksza od 1.
 
 
 	id_miasta   nazwa miasta                                       srednia pensja
@@ -791,8 +791,8 @@ SELECT  m.id_miasta, m.nazwa AS [nazwa miasta], AVG(e.pensja) AS [srednia pensja
 */
 
 /*
-	Z5.1 - Pokazaæ firmy wraz ze œredni¹ aktualna pensj¹ w nich
-	U¿ywaj¹c UNION, rozwa¿yæ opcjê ALL
+	Z5.1 - Pokazaï¿½ firmy wraz ze ï¿½redniï¿½ aktualna pensjï¿½ w nich
+	Uï¿½ywajï¿½c UNION, rozwaï¿½yï¿½ opcjï¿½ ALL
 */
 
 
@@ -811,13 +811,13 @@ SELECT f.nazwa_skr AS [id firmy], f.nazwa AS [nazwa firmy], CONVERT(money, null)
 						)
 
 /*
-	Tworzê zapytanie szukaj¹ce id firmy, nazwê firmy i œredni¹ pensjê w ka¿dej firmie grupuj¹c po id_firmy i nazwie. 
-	Zapytanie to wyœwietli wszystkie firmy, dla których istniej¹ etaty i które posiadaj¹ pewn¹ œredni¹ pensjê.
+	Tworzï¿½ zapytanie szukajï¿½ce id firmy, nazwï¿½ firmy i ï¿½redniï¿½ pensjï¿½ w kaï¿½dej firmie grupujï¿½c po id_firmy i nazwie. 
+	Zapytanie to wyï¿½wietli wszystkie firmy, dla ktï¿½rych istniejï¿½ etaty i ktï¿½re posiadajï¿½ pewnï¿½ ï¿½redniï¿½ pensjï¿½.
 
-	Tworzê drugie zapytanie szukaj¹ce id firmy, nazwê firmy i NULL dla sredniej pensji, dla których nie istniej¹ ¿adne etaty.
+	Tworzï¿½ drugie zapytanie szukajï¿½ce id firmy, nazwï¿½ firmy i NULL dla sredniej pensji, dla ktï¿½rych nie istniejï¿½ ï¿½adne etaty.
 
-	Za pomoc¹ operatora UNION ³¹czê ze sob¹ oba zapytania, tak aby wyœwietliæ wszystkie rekordy z dwóch tabel.
-	Do operatora UNION dodaje ALL, gdy¿ wiem, ¿e oba zapytania s¹ roz³¹czne - w 1 pokazujemy firmy, dla których istniej¹ etaty, a w 2 firmy, dla których nie istniej¹ etaty.
+	Za pomocï¿½ operatora UNION ï¿½ï¿½czï¿½ ze sobï¿½ oba zapytania, tak aby wyï¿½wietliï¿½ wszystkie rekordy z dwï¿½ch tabel.
+	Do operatora UNION dodaje ALL, gdyï¿½ wiem, ï¿½e oba zapytania sï¿½ rozï¿½ï¿½czne - w 1 pokazujemy firmy, dla ktï¿½rych istniejï¿½ etaty, a w 2 firmy, dla ktï¿½rych nie istniejï¿½ etaty.
 
 	
 	id firmy nazwa firmy                                        srednia pensja
@@ -848,9 +848,9 @@ SELECT f.nazwa_skr AS [id firmy], f.nazwa AS [nazwa firmy], AVG(e.pensja) AS [sr
 		GROUP BY f.nazwa_skr, f.nazwa
 
 /*
-	Tworzê wy³¹cznie jedno zapytanie pokazuj¹ce id firmy, nazwê firmy i sredni¹ pensjê.
-	Polecenie LEFT OUTER JOIN ³¹czy z etatami równie¿ takie firmy, dla których nie istniej¹ ¿adne etaty.
-	Sredniej pensji w firmach, dla których nie istniej¹ etaty, przypisana zostaje wartoœæ NULL.
+	Tworzï¿½ wyï¿½ï¿½cznie jedno zapytanie pokazujï¿½ce id firmy, nazwï¿½ firmy i sredniï¿½ pensjï¿½.
+	Polecenie LEFT OUTER JOIN ï¿½ï¿½czy z etatami rï¿½wnieï¿½ takie firmy, dla ktï¿½rych nie istniejï¿½ ï¿½adne etaty.
+	Sredniej pensji w firmach, dla ktï¿½rych nie istniejï¿½ etaty, przypisana zostaje wartoï¿½ï¿½ NULL.
 
 	id firmy nazwa firmy                                        srednia pensja
 	-------- -------------------------------------------------- ---------------------
@@ -871,7 +871,7 @@ SELECT f.nazwa_skr AS [id firmy], f.nazwa AS [nazwa firmy], AVG(e.pensja) AS [sr
 
 
 /*
-	Z5.3 Napisaæ procedurê pokazuj¹c¹ œredni¹ pensjê w firmach z miasta - parametr procedure @id_miasta
+	Z5.3 Napisaï¿½ procedurï¿½ pokazujï¿½cï¿½ ï¿½redniï¿½ pensjï¿½ w firmach z miasta - parametr procedure @id_miasta
 */
 GO
 
@@ -886,9 +886,9 @@ AS
 GO
 
 /*
-	Tworzê procedure pobieraj¹c¹ argument @id_miasta typu int
-	Tworzê zapytanie wyszukuj¹ce id miasta, nazwê miasta i œredni¹ pensjê pogrupowan¹ wed³ug id miasta i nazwy miasta.
-	Do zapytania dodaje warunek twierdz¹cy, ¿e id_miasta rekordu ma byæ równe @id_miasta (przekazanemu argumentowi)
+	Tworzï¿½ procedure pobierajï¿½cï¿½ argument @id_miasta typu int
+	Tworzï¿½ zapytanie wyszukujï¿½ce id miasta, nazwï¿½ miasta i ï¿½redniï¿½ pensjï¿½ pogrupowanï¿½ wedï¿½ug id miasta i nazwy miasta.
+	Do zapytania dodaje warunek twierdzï¿½cy, ï¿½e id_miasta rekordu ma byï¿½ rï¿½wne @id_miasta (przekazanemu argumentowi)
 
 	Command(s) completed successfully.
 */
@@ -896,8 +896,8 @@ GO
 EXEC P1 2
 
 /*
-	Wywo³ujê procedurê dla przyk³adowego @id_miasta = 2.
-	Procedura pokazuje œredni¹ pensjê dla podanego miasta - Pruszkowa.
+	Wywoï¿½ujï¿½ procedurï¿½ dla przykï¿½adowego @id_miasta = 2.
+	Procedura pokazuje ï¿½redniï¿½ pensjï¿½ dla podanego miasta - Pruszkowa.
 
 	id_miasta   nazwa                                              srednia pensja
 	----------- -------------------------------------------------- ---------------------
@@ -910,17 +910,17 @@ EXEC P1 2
 
 /* Z6 Mateusz, Czarnecki, 2, 319030
 **
-** 3 regu³y tworzenia TRIGGERA
-** R1 - Trigger nie mo¿e aktualizowaæ CALEJ tabeli a co najwy¿ej elementy zmienione
-** R2 - Trigger mo¿e wywo³aæ sam siebie - uzysamy nieskoñczon¹ rekurencjê == stack overflow
-** R3 - Zawsze zakladamy, ¿e wstawiono / zmodyfikowano / skasowano wiecej jak 1 rekord
+** 3 reguï¿½y tworzenia TRIGGERA
+** R1 - Trigger nie moï¿½e aktualizowaï¿½ CALEJ tabeli a co najwyï¿½ej elementy zmienione
+** R2 - Trigger moï¿½e wywoï¿½aï¿½ sam siebie - uzysamy nieskoï¿½czonï¿½ rekurencjï¿½ == stack overflow
+** R3 - Zawsze zakladamy, ï¿½e wstawiono / zmodyfikowano / skasowano wiecej jak 1 rekord
 **
-** Z1: Napisaæ trigger, który bêdzie usuwa³ spacje z pola nazwisko
+** Z1: Napisaï¿½ trigger, ktï¿½ry bï¿½dzie usuwaï¿½ spacje z pola nazwisko
 ** Trigger na INSERT, UPDATE
-** UWAGA !! Trigger bêdzie robi³ UPDATE na polu NAZWISKO
-** To grozi REKURENCJ¥ i przepelnieniem stosu
-** Dlatego trzeba bêdzie sprawdzaæ UPDATE(nazwisko) i sprawdzaæ czy we
-** wstawionych rekordach by³y spacje i tylko takowe poprawiaæ (ze spacjami w nazwisku)
+** UWAGA !! Trigger bï¿½dzie robiï¿½ UPDATE na polu NAZWISKO
+** To grozi REKURENCJï¿½ i przepelnieniem stosu
+** Dlatego trzeba bï¿½dzie sprawdzaï¿½ UPDATE(nazwisko) i sprawdzaï¿½ czy we
+** wstawionych rekordach byï¿½y spacje i tylko takowe poprawiaï¿½ (ze spacjami w nazwisku)
 **
 */
 
@@ -944,41 +944,41 @@ GO
 /*
 	Command(s) completed successfully.
 
-	Tworzê TRIGGER dzia³aj¹cy pod warunkiem wstawienia nowego lub edytowania nazwiska i dla nazwisk, które posiadaj¹ spacjê. 
-	Edytuje wykryte rekordy pod warunkiem, ¿e posiadaj¹ spacjê.
+	Tworzï¿½ TRIGGER dziaï¿½ajï¿½cy pod warunkiem wstawienia nowego lub edytowania nazwiska i dla nazwisk, ktï¿½re posiadajï¿½ spacjï¿½. 
+	Edytuje wykryte rekordy pod warunkiem, ï¿½e posiadajï¿½ spacjï¿½.
 */
 
 UPDATE OSOBY SET OSOBY.nazwisko = N'Nowak Salomon'
 		WHERE OSOBY.id_osoby = 2
 
-UPDATE OSOBY SET OSOBY.nazwisko = 'Barbik W¹sacz'
+UPDATE OSOBY SET OSOBY.nazwisko = 'Barbik Wï¿½sacz'
 		WHERE OSOBY.id_osoby = 3
 
 /*
-	Przy edytowaniu rekordu, osoby, którym próbujemy wstawiæ nazwisko ze spacj¹, spacja zostanie zamieniona na "-".
+	Przy edytowaniu rekordu, osoby, ktï¿½rym prï¿½bujemy wstawiï¿½ nazwisko ze spacjï¿½, spacja zostanie zamieniona na "-".
 
 	id_osoby    id_miasta   imie                                               nazwisko
 	----------- ----------- -------------------------------------------------- --------------------------------------------------
 	2           4           Adam                                               Nowak-Salomon
-	3           7           Ferdynand                                          Barbik-W¹sacz
+	3           7           Ferdynand                                          Barbik-Wï¿½sacz
 
 */
 
 /*
-** Z2: Napisaæ procedurê szukaj¹c¹ osób z paramertrami
+** Z2: Napisaï¿½ procedurï¿½ szukajï¿½cï¿½ osï¿½b z paramertrami
 ** @imie_wzor nvarchar(20) = NULL
 ** @nazwisko_wzor nvarchar(20) = NULL
 ** @pokaz_zarobki bit = 0
-** Procedura ma mieæ zmienn¹ @sql nvarchar(1000), któr¹ buduje dynamicznie
+** Procedura ma mieï¿½ zmiennï¿½ @sql nvarchar(1000), ktï¿½rï¿½ buduje dynamicznie
 ** @pokaz_zarobki = 0 => (imie, nazwisko, id_osoby, nazwa_miasta)
 ** @pokaz_zarobki = 1 => (imie, nazwisko, id_osoby, suma_z_akt_etatow)
-** Mozliwe wywo³ania: EXEC sz_o @nazwisko_wzor = N'Stodolsk%'
-** powinno zbudowaæ zmienn¹ tekstow¹
+** Mozliwe wywoï¿½ania: EXEC sz_o @nazwisko_wzor = N'Stodolsk%'
+** powinno zbudowaï¿½ zmiennï¿½ tekstowï¿½
 ** @sql = N'SELECT o.*, m.nazwa AS nazwa_miasta FROM osoby o join miasta m "
 ** + N' ON (m.id_miasta=o.id_miasta) WHERE o.nazwisko LIKE NStodolsk% '
 ** uruchomienie zapytania to EXEC sp_sqlExec @sql
-** rekomendujê aby najpierw procedura zwraca³a zapytanie SELECT @sql
-** a dopiero jak bêd¹ poprawne uruachamia³a je
+** rekomendujï¿½ aby najpierw procedura zwracaï¿½a zapytanie SELECT @sql
+** a dopiero jak bï¿½dï¿½ poprawne uruachamiaï¿½a je
 */
 
 UPDATE OSOBY SET OSOBY.nazwisko = N'Kowalski'
