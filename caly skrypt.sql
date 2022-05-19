@@ -1020,8 +1020,8 @@ UPDATE OSOBY SET OSOBY.nazwisko = b.nazwisko
 CREATE TABLE #wyp(id_os int not null, id_ks int not null, liczba int not null)
 INSERT INTO #wyp (id_os, id_ks, liczba) VALUES (1, 1, 1), (1, 1, 2), (2, 5, 6)
 
-
 Zwrot zwiêksza stan_dostepny
+
 ** UWAGA
 ** Zrealizowaæ TRIGERY na kasowanie z WYP lub ZWR
 **
@@ -1052,6 +1052,10 @@ IF OBJECT_ID(N'WYP') IS NOT NULL
 IF OBJECT_ID(N'KSIAZKI') IS NOT NULL
 	DROP TABLE KSIAZKI
 
+DROP TRIGGER tr_ins_wyp
+DROP TRIGGER tr_isn_zwr
+DROP TRIGGER tr_del_wyp
+DROP TRIGGER tr_del_zwr
 
 CREATE TABLE dbo.KSIAZKI 
 (
@@ -1109,22 +1113,272 @@ SELECT * FROM KSIAZKI
 SELECT * FROM WYP
 SELECT * FROM ZWR
 
-DECLARE @kk int
-SET @kk = (SELECT WYP.liczba FROM WYP where WYP.id_ksiazki = 1)
-UPDATE WYP SET liczba = liczba + @kk
+/* 
+	Po utworzeniu tabel KSIAZKI, WYP, ZWR zawieraj¹ one nastêpuj¹ce dane:
 
-			
-SELECT * FROM KSIAZKI
+	KSIAZKI:
+	tytul                autor                id_ksiazki  stan_bibl   stan_dostepny
+	-------------------- -------------------- ----------- ----------- -------------
+	Pan Tadeusz          Adam Mickiewicz      1           4           4
+	Kordian              Juliusz S³owacki     2           5           5
+	Dziady               Adam Mickiewicz      3           7           7
+	Rok 1984             George Orwell        4           2           2
+	Quo Vadis            Henryk Sienkiewicz   5           4           4
+
+	WYP:
+	id_osoby    id_ksiazki  liczba      czas
+	----------- ----------- ----------- -----------------------
+	1           1           2           2022-01-12 00:00:00.000
+	2           2           1           2022-03-02 00:00:00.000
+	3           3           2           2022-01-18 00:00:00.000
+	4           4           2           2022-04-21 00:00:00.000
+	5           5           2           2022-05-06 00:00:00.000
+
+
+	ZWR:
+	id_osoby    id_ksiazki  liczba      czas
+	----------- ----------- ----------- -----------------------
+	2           5           1           2022-01-06 00:00:00.000
+	4           1           2           2021-09-01 00:00:00.000
+	3           3           1           2020-11-26 00:00:00.000
+*/
 
 GO
 CREATE TRIGGER dbo.tr_ins_wyp ON WYP FOR INSERT
 AS
-	DECLARE @in int
-	SET @in = (SELECT i.liczba FROM inserted i)
-	UPDATE KSIAZKI SET stan_dostepny = stan_dostepny - @in
-	WHERE KSIAZKI.id_ksiazki IN (
+	UPDATE KSIAZKI SET stan_dostepny = stan_dostepny - i.liczba
+	FROM KSIAZKI k JOIN inserted i ON k.id_ksiazki = i.id_ksiazki
+	WHERE k.id_ksiazki IN (
 	SELECT i.id_ksiazki
 			FROM inserted i join KSIAZKI k ON k.id_ksiazki = i.id_ksiazki 
 	)
 GO
+
+/*	
+	Tworzê trigger reaguj¹cy na wstawianie rekordów to tabeli WYP.
+	Wprowadzaj¹c rekord do tabeli WYP, trigger odejmuje od stanu dostêpnego liczbê wypo¿yczonych ksi¹¿ek.
+*/
+
 INSERT INTO WYP(id_osoby, id_ksiazki, liczba, czas) VALUES (1, 1, 2, CONVERT(datetime, '12/01/2022', 103))
+
+/*
+	Po wprowadzeniu danych, stan dostêpny ksi¹¿ki "Pan Tadeusz" zmniejszy³ siê o liczbê wypo¿yczonych ksi¹¿ek - o 2.
+
+	KSIAZKI:
+	tytul                autor                id_ksiazki  stan_bibl   stan_dostepny
+	-------------------- -------------------- ----------- ----------- -------------
+	Pan Tadeusz          Adam Mickiewicz      1           4           2
+	Kordian              Juliusz S³owacki     2           5           5
+	Dziady               Adam Mickiewicz      3           7           7
+	Rok 1984             George Orwell        4           2           2
+	Quo Vadis            Henryk Sienkiewicz   5           4           4
+
+	WYP:
+	id_osoby    id_ksiazki  liczba      czas
+	----------- ----------- ----------- -----------------------
+	1           1           2           2022-01-12 00:00:00.000
+	2           2           1           2022-03-02 00:00:00.000
+	3           3           2           2022-01-18 00:00:00.000
+	4           4           2           2022-04-21 00:00:00.000
+	5           5           2           2022-05-06 00:00:00.000
+	1           1           2           2022-01-12 00:00:00.000
+*/
+
+GO
+CREATE TRIGGER dbo.tr_ins_zwr ON ZWR FOR INSERT
+AS
+	UPDATE KSIAZKI SET stan_dostepny = stan_dostepny + i.liczba
+	FROM KSIAZKI k JOIN inserted i ON k.id_ksiazki = i.id_ksiazki
+	WHERE k.id_ksiazki IN (
+	SELECT i.id_ksiazki
+			FROM inserted i join KSIAZKI k ON k.id_ksiazki = i.id_ksiazki 
+	)
+GO
+
+/*	
+	Tworzê trigger reaguj¹cy na wstawianie rekordów to tabeli ZWR.
+	Wprowadzaj¹c rekord do tabeli ZWR, trigger dodaje do stanu dostêpnego liczbê zwórconych ksi¹¿ek.
+*/
+
+INSERT INTO ZWR(id_osoby, id_ksiazki, liczba, czas) VALUES (1, 1, 2, CONVERT(datetime, '12/01/2022', 103))
+
+/*
+	Po zwróceniu ksi¹¿ki "Pan Tadeusz", stan dostêpny ksi¹¿ek w bibliotece zwiêkszy³ siê o 2, a wiêc wróci³ do pierwotnej wartoœci.
+
+	KSIAZKI:
+	tytul                autor                id_ksiazki  stan_bibl   stan_dostepny
+	-------------------- -------------------- ----------- ----------- -------------
+	Pan Tadeusz          Adam Mickiewicz      1           4           4
+	Kordian              Juliusz S³owacki     2           5           5
+	Dziady               Adam Mickiewicz      3           7           7
+	Rok 1984             George Orwell        4           2           2
+	Quo Vadis            Henryk Sienkiewicz   5           4           4
+
+	ZWR:
+	id_osoby    id_ksiazki  liczba      czas
+	----------- ----------- ----------- -----------------------
+	2           5           1           2022-01-06 00:00:00.000
+	4           1           2           2021-09-01 00:00:00.000
+	3           3           1           2020-11-26 00:00:00.000
+	1           1           2           2022-01-12 00:00:00.000
+*/
+
+GO
+CREATE TRIGGER dbo.tr_del_wyp ON WYP FOR DELETE
+AS
+	UPDATE KSIAZKI SET stan_dostepny = stan_dostepny + d.liczba
+	FROM KSIAZKI k JOIN deleted d ON k.id_ksiazki = d.id_ksiazki
+	WHERE k.id_ksiazki IN (
+		SELECT d.id_ksiazki
+			FROM deleted d JOIN KSIAZKI k ON d.id_ksiazki = k.id_ksiazki
+	)
+GO
+/*	
+	Tworzê trigger reaguj¹cy na usuwanie rekordów z tabeli WYP.
+	Usuwaj¹c rekord z tabeli WYP, trigger dodaje do stanu dostêpnego liczbê usuniêtych wypo¿yczonych ksi¹¿ek.
+*/
+
+DELETE FROM WYP WHERE WYP.id_ksiazki = 1
+
+/* 
+	Po usuniêciu z tabeli WYP dwóch rekordów o id_ksiazki = 1 - "Pan Tadeusz", ka¿da po 2 sztuki, do tabeli KSIAZKI dodane zosta³y 4 takie ksi¹¿ki.
+	W tabeli ksiazki znajduje sie zatem obecnie 6 ksiazek "Pan Tadeusz".
+
+	KSIAZKI:
+	tytul                autor                id_ksiazki  stan_bibl   stan_dostepny
+	-------------------- -------------------- ----------- ----------- -------------
+	Pan Tadeusz          Adam Mickiewicz      1           4           6
+	Kordian              Juliusz S³owacki     2           5           5
+	Dziady               Adam Mickiewicz      3           7           7
+	Rok 1984             George Orwell        4           2           2
+	Quo Vadis            Henryk Sienkiewicz   5           4           4
+
+	WYP:
+	id_osoby    id_ksiazki  liczba      czas
+	----------- ----------- ----------- -----------------------
+	2           2           1           2022-03-02 00:00:00.000
+	3           3           2           2022-01-18 00:00:00.000
+	4           4           2           2022-04-21 00:00:00.000
+	5           5           2           2022-05-06 00:00:00.000
+*/
+
+
+GO
+CREATE TRIGGER dbo.tr_del_zwr ON ZWR FOR DELETE
+AS
+	UPDATE KSIAZKI SET stan_dostepny = stan_dostepny - d.liczba
+	FROM KSIAZKI k JOIN deleted d ON k.id_ksiazki = d.id_ksiazki
+	WHERE k.id_ksiazki IN (
+		SELECT d.id_ksiazki
+			FROM deleted d JOIN KSIAZKI k ON d.id_ksiazki = k.id_ksiazki
+	)
+GO
+
+
+/*	
+	Tworzê trigger reaguj¹cy na usuwanie rekordów z tabeli ZWR.
+	Usuwaj¹c rekord z tabeli ZWR, trigger odejmuje od stanu dostêpnego liczbê usuniêtych zwróconych ksi¹¿ek.
+*/
+
+DELETE FROM ZWR WHERE ZWR.id_ksiazki = 1
+
+/* 
+	Po usuniêciu z tabeli ZWR rekordU o id_ksiazki = 1 - "Pan Tadeusz" (2 sztuki) , z tabeli KSIAZKI zosta³y usuniête 2 takie ksi¹¿ki.
+	W tabeli ksiazki znajduj¹ sie zatem obecnie 4 ksia¿ki "Pan Tadeusz".
+
+	KSIAZKI:
+	tytul                autor                id_ksiazki  stan_bibl   stan_dostepny
+	-------------------- -------------------- ----------- ----------- -------------
+	Pan Tadeusz          Adam Mickiewicz      1           4           4
+	Kordian              Juliusz S³owacki     2           5           5
+	Dziady               Adam Mickiewicz      3           7           7
+	Rok 1984             George Orwell        4           2           2
+	Quo Vadis            Henryk Sienkiewicz   5           4           4
+
+	ZWR:
+	id_osoby    id_ksiazki  liczba      czas
+	----------- ----------- ----------- -----------------------
+	2           5           1           2022-01-06 00:00:00.000
+	3           3           1           2020-11-26 00:00:00.000
+*/
+GO
+CREATE TRIGGER dbo.tr_upd_wyp ON WYP FOR UPDATE
+AS
+	UPDATE KSIAZKI SET stan_dostepny = stan_dostepny - (i.liczba - d.liczba )
+		FROM KSIAZKI k 
+		JOIN inserted i ON k.id_ksiazki = i.id_ksiazki
+		JOIN deleted d ON k.id_ksiazki = d.id_ksiazki
+		WHERE k.id_ksiazki IN (
+			SELECT d.id_ksiazki
+				FROM deleted d JOIN KSIAZKI k ON d.id_ksiazki = k.id_ksiazki
+		)
+GO
+
+/*
+	Tworzê trigger reaguj¹cy na UPDATE rekordów z tabeli WYP.
+	Edytuj¹c WYP, trigger odejmuje od stanu dostêpnego ró¿nicê liczby ksi¹¿ek, jaka zosta³a zmieniona.
+*/
+
+SELECT * FROM KSIAZKI
+SELECT * FROM WYP
+SELECT * FROM ZWR
+
+UPDATE WYP SET liczba = 3
+WHERE id_ksiazki = 2
+
+/*
+	Po edytowaniu liczby (z wartosci 1 do 3) wypo¿yczonych ksi¹zek o id_ksiazki = 2, stan tabeli ksiazki zmienia siê o ró¿nicê zedytowanej i poprzedniej wartoœci. 
+	Stan dostepny ksiazki "Kordian" zmniejszy³ siê wiêc z 5 do 3.
+
+	KSIAZKI:
+	tytul                autor                id_ksiazki  stan_bibl   stan_dostepny
+	-------------------- -------------------- ----------- ----------- -------------
+	Pan Tadeusz          Adam Mickiewicz      1           4           4
+	Kordian              Juliusz S³owacki     2           5           3
+	Dziady               Adam Mickiewicz      3           7           7
+	Rok 1984             George Orwell        4           2           2
+	Quo Vadis            Henryk Sienkiewicz   5           4           4
+
+	WYP:
+	id_osoby    id_ksiazki  liczba      czas
+	----------- ----------- ----------- -----------------------
+	2           2           3           2022-03-02 00:00:00.000
+	3           3           2           2022-01-18 00:00:00.000
+	4           4           2           2022-04-21 00:00:00.000
+	5           5           2           2022-05-06 00:00:00.000
+*/
+
+GO
+CREATE TRIGGER dbo.tr_upd_zwr ON ZWR FOR UPDATE
+AS
+	UPDATE KSIAZKI SET stan_dostepny = stan_dostepny + (i.liczba - d.liczba )
+		FROM KSIAZKI k 
+		JOIN inserted i ON k.id_ksiazki = i.id_ksiazki
+		JOIN deleted d ON k.id_ksiazki = d.id_ksiazki
+		WHERE k.id_ksiazki IN (
+			SELECT d.id_ksiazki
+				FROM deleted d JOIN KSIAZKI k ON d.id_ksiazki = k.id_ksiazki
+		)
+GO
+
+/*
+	Tworzê trigger reaguj¹cy na UPDATE rekordów z tabeli ZWR.
+	Edytuj¹c ZWR, trigger doda do stanu dostêpnego ró¿nicê liczby ksi¹¿ek, jaka zosta³a zmieniona.
+*/
+
+UPDATE ZWR SET liczba = 3
+WHERE id_ksiazki = 3
+
+/*
+	Po edytowaniu liczby (z wartosci 1 do 3) zwróconych ksi¹zek o id_ksiazki = 3, stan tabeli ksiazki powiêksza siê o ró¿nicê zedytowanej i poprzedniej wartoœci. 
+	Stan dostepny ksiazki "Dziady" zwiêkszy³ siê wiêc z 7 do 9.
+
+	KSIAZKI:
+	tytul                autor                id_ksiazki  stan_bibl   stan_dostepny
+	-------------------- -------------------- ----------- ----------- -------------
+	Pan Tadeusz          Adam Mickiewicz      1           4           4
+	Kordian              Juliusz S³owacki     2           5           3
+	Dziady               Adam Mickiewicz      3           7           9
+	Rok 1984             George Orwell        4           2           2
+	Quo Vadis            Henryk Sienkiewicz   5           4           4
+*/
