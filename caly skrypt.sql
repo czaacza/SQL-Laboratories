@@ -1382,3 +1382,34 @@ WHERE id_ksiazki = 3
 	Rok 1984             George Orwell        4           2           2
 	Quo Vadis            Henryk Sienkiewicz   5           4           4
 */
+/*
+** Testowanie: stworzcie procedurê, która pokaze wszystkie ksi¹zki,
+** dane ksi¹zki, stan_bibl, SUM(liczba) z ZWR - SUM(liczba) z WYP =>
+** ISNULL(SUM(Liczba),0)
+** te dwie kolumny powiny byæ równe
+** po wielu dzialaniach w bazie
+** dzialania typu kasowanie rejestrowac w tabeli skasowane
+** (rodzaj (wyp/zwr), id_os, id_ks, liczba)
+** osobne triggery na DELETE z WYP i ZWR które bêd¹ rejestrowaæ skasowania\
+
+stan bibl - liczba ksiazek jaka mialaby biblioteka gdyby nikt nic nie wypozyczyl
+*/
+
+SELECT * FROM WYP
+
+GO
+ALTER PROCEDURE dbo.pokaz
+AS
+	SELECT k.*, x.[liczba wyp] AS [liczba wyp], x.[liczba zwr] AS [liczba zwr]
+			FROM KSIAZKI k
+			JOIN WYP w ON w.id_ksiazki = k.id_ksiazki
+			JOIN ZWR z ON z.id_ksiazki = k.id_ksiazki
+			JOIN (
+					SELECT w.id_ksiazki, ISNULL(SUM(w.liczba),0) AS [liczba wyp], ISNULL(SUM(z.liczba),0) AS [liczba zwr]
+							FROM WYP w
+							JOIN ZWR z ON z.id_ksiazki = w.id_ksiazki
+							GROUP BY w.id_ksiazki
+				) x ON x.id_ksiazki = k.id_ksiazki
+GO
+
+EXEC pokaz
