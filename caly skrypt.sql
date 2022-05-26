@@ -1052,10 +1052,13 @@ IF OBJECT_ID(N'WYP') IS NOT NULL
 IF OBJECT_ID(N'KSIAZKI') IS NOT NULL
 	DROP TABLE KSIAZKI
 
+DROP TRIGGER tr_ins_ks
 DROP TRIGGER tr_ins_wyp
-DROP TRIGGER tr_isn_zwr
+DROP TRIGGER tr_ins_zwr
 DROP TRIGGER tr_del_wyp
 DROP TRIGGER tr_del_zwr
+DROP TRIGGER tr_upd_wyp
+DROP TRIGGER tr_upd_zwr
 
 CREATE TABLE dbo.KSIAZKI 
 (
@@ -1063,7 +1066,7 @@ CREATE TABLE dbo.KSIAZKI
 	autor			nvarchar(20)	NOT NULL,
 	id_ksiazki		int				NOT NULL	IDENTITY CONSTRAINT PK_KSIAZKI PRIMARY KEY,
 	stan_bibl		int				NOT NULL,
-	stan_dostepny	int				NOT NULL	DEFAULT 0
+	stan_dostepny	int				NULL
 )
 
 CREATE TABLE dbo.WYP
@@ -1086,62 +1089,114 @@ CREATE TABLE dbo.ZWR
 	czas			datetime		NOT NULL,
 )	
 
+GO
+CREATE TRIGGER dbo.tr_ins_ks ON KSIAZKI FOR INSERT
+AS
+	UPDATE KSIAZKI SET stan_dostepny = (SELECT i.stan_bibl FROM inserted i)
+	WHERE KSIAZKI.id_ksiazki IN
+	(SELECT k.id_ksiazki
+			FROM KSIAZKI k JOIN inserted i ON k.id_ksiazki = i.id_ksiazki)
+GO
+
+/*
+	Tworzê trigger, który ustawia domyœln¹ wartoœæ kolumny stan_dostepny na wartoœæ stan_bibl.
+*/
+
 DECLARE @ks_pt int, @ks_ko int, @ks_dz int, @ks_ro int, @ks_qu int
 
-INSERT INTO KSIAZKI (tytul, autor, stan_bibl, stan_dostepny) VALUES (N'Pan Tadeusz', N'Adam Mickiewicz', 4, 4)
+INSERT INTO KSIAZKI (tytul, autor, stan_bibl) VALUES (N'Pan Tadeusz', N'Adam Mickiewicz', 4)
 SET @ks_pt = SCOPE_IDENTITY()
-INSERT INTO KSIAZKI (tytul, autor, stan_bibl, stan_dostepny) VALUES (N'Kordian', N'Juliusz S³owacki', 5, 5)
+INSERT INTO KSIAZKI (tytul, autor, stan_bibl) VALUES (N'Kordian', N'Juliusz S³owacki', 5)
 SET @ks_ko = SCOPE_IDENTITY()
-INSERT INTO KSIAZKI (tytul, autor, stan_bibl, stan_dostepny) VALUES (N'Dziady', N'Adam Mickiewicz', 7, 7)
+INSERT INTO KSIAZKI (tytul, autor, stan_bibl) VALUES (N'Dziady', N'Adam Mickiewicz', 7)
 SET @ks_dz = SCOPE_IDENTITY()
-INSERT INTO KSIAZKI (tytul, autor, stan_bibl, stan_dostepny) VALUES (N'Rok 1984', N'George Orwell', 2, 2)
+INSERT INTO KSIAZKI (tytul, autor, stan_bibl) VALUES (N'Rok 1984', N'George Orwell', 2)
 SET @ks_ro = SCOPE_IDENTITY()
-INSERT INTO KSIAZKI (tytul, autor, stan_bibl, stan_dostepny) VALUES (N'Quo Vadis', N'Henryk Sienkiewicz', 4, 4)
+INSERT INTO KSIAZKI (tytul, autor, stan_bibl) VALUES (N'Quo Vadis', N'Henryk Sienkiewicz', 4)
 SET @ks_qu = SCOPE_IDENTITY()
 
-INSERT INTO WYP (id_osoby, id_ksiazki, liczba, czas) VALUES (1, @ks_pt, 2, CONVERT(datetime, '12/01/2022', 103))
-INSERT INTO WYP (id_osoby, id_ksiazki, liczba, czas) VALUES (2, @ks_ko, 1, CONVERT(datetime, '02/03/2022', 103))
-INSERT INTO WYP (id_osoby, id_ksiazki, liczba, czas) VALUES (3, @ks_dz, 2, CONVERT(datetime, '18/01/2022', 103))
+/*
+INSERT INTO WYP (id_osoby, id_ksiazki, liczba, czas) VALUES (1, @ks_pt, 4, CONVERT(datetime, '12/01/2022', 103))
+INSERT INTO WYP (id_osoby, id_ksiazki, liczba, czas) VALUES (2, @ks_ko, 2, CONVERT(datetime, '02/03/2022', 103))
+INSERT INTO WYP (id_osoby, id_ksiazki, liczba, czas) VALUES (3, @ks_dz, 3, CONVERT(datetime, '18/01/2022', 103))
 INSERT INTO WYP (id_osoby, id_ksiazki, liczba, czas) VALUES (4, @ks_ro, 2, CONVERT(datetime, '21/04/2022', 103))
 INSERT INTO WYP (id_osoby, id_ksiazki, liczba, czas) VALUES (5, @ks_qu, 2, CONVERT(datetime, '06/05/2022', 103))
 
 INSERT INTO ZWR (id_osoby, id_ksiazki, liczba, czas) VALUES (2, @ks_qu, 1, CONVERT(datetime, '06/01/2022', 103))
 INSERT INTO ZWR (id_osoby, id_ksiazki, liczba, czas) VALUES (4, @ks_pt, 2, CONVERT(datetime, '01/09/2021', 103))
 INSERT INTO ZWR (id_osoby, id_ksiazki, liczba, czas) VALUES (3, @ks_dz, 1, CONVERT(datetime, '26/11/2020', 103))
+*/
+/*
+	Tworzê tabele KSIAZKI, WYP i ZWR. Do tabeli ksi¹¿ki dodaje kilka przyk³adowych tytu³ów.
+*/
 
-SELECT * FROM KSIAZKI
-SELECT * FROM WYP
-SELECT * FROM ZWR
+GO
+ALTER PROCEDURE dbo.pokaz
+AS
+	SELECT k.*, ISNULL(x.[liczba wyp],0) AS [liczba wyp], ISNULL(x.[liczba zwr], 0) AS [liczba zwr]
+			FROM KSIAZKI k
+			LEFT OUTER
+			JOIN (
+					SELECT w.id_ksiazki, ISNULL(SUM(w.liczba),0) AS [liczba wyp], ISNULL(SUM(z.liczba),0) AS [liczba zwr]
+							FROM WYP w
+							LEFT OUTER
+							JOIN ZWR z ON z.id_ksiazki = w.id_ksiazki
+							GROUP BY w.id_ksiazki
+				) x ON x.id_ksiazki = k.id_ksiazki
+GO
+
+exec pokaz
+
+/*
+	Na samym pocz¹tku tworzê procedurê u³atwiaj¹c¹ testowanie zapytañ dotycz¹cych reszty czêœci zadania.
+	Procedura pokazuje dane ksi¹¿ki oraz liczbê wypo¿yczonych i zwróconych ksi¹¿ek. 
+*/
 
 /* 
-	Po utworzeniu tabel KSIAZKI, WYP, ZWR zawieraj¹ one nastêpuj¹ce dane:
+	Po utworzeniu tabel KSIAZKI, WYP, ZWR bilans dostêpnych, wypo¿yczonych i zwróconych ksi¹¿ek prezentuje siê nastêpuj¹co:
 
-	KSIAZKI:
-	tytul                autor                id_ksiazki  stan_bibl   stan_dostepny
-	-------------------- -------------------- ----------- ----------- -------------
-	Pan Tadeusz          Adam Mickiewicz      1           4           4
-	Kordian              Juliusz S³owacki     2           5           5
-	Dziady               Adam Mickiewicz      3           7           7
-	Rok 1984             George Orwell        4           2           2
-	Quo Vadis            Henryk Sienkiewicz   5           4           4
-
-	WYP:
-	id_osoby    id_ksiazki  liczba      czas
-	----------- ----------- ----------- -----------------------
-	1           1           2           2022-01-12 00:00:00.000
-	2           2           1           2022-03-02 00:00:00.000
-	3           3           2           2022-01-18 00:00:00.000
-	4           4           2           2022-04-21 00:00:00.000
-	5           5           2           2022-05-06 00:00:00.000
-
-
-	ZWR:
-	id_osoby    id_ksiazki  liczba      czas
-	----------- ----------- ----------- -----------------------
-	2           5           1           2022-01-06 00:00:00.000
-	4           1           2           2021-09-01 00:00:00.000
-	3           3           1           2020-11-26 00:00:00.000
+	tytul                autor                id_ksiazki  stan_bibl   stan_dostepny liczba wyp  liczba zwr
+	-------------------- -------------------- ----------- ----------- ------------- ----------- -----------
+	Pan Tadeusz          Adam Mickiewicz      1           4           4             0           0
+	Kordian              Juliusz S³owacki     2           5           5             0           0
+	Dziady               Adam Mickiewicz      3           7           7             0           0
+	Rok 1984             George Orwell        4           2           2             0           0
+	Quo Vadis            Henryk Sienkiewicz   5           4           4             0           0
 */
+
+GO
+CREATE TRIGGER dbo.tr_ks ON KSIAZKI FOR UPDATE
+AS
+	IF UPDATE(stan_dostepny)
+	AND EXISTS
+	(
+	SELECT *
+			FROM inserted i 
+			WHERE i.stan_dostepny < 0
+	)
+	BEGIN
+	RAISERROR(N'Stan dostepny ksiazek osiagnal wartosc mniejsza od 0.', 16, 3)
+	ROLLBACK TRAN
+	END
+
+	IF UPDATE(stan_dostepny)
+	AND EXISTS
+	(
+	SELECT *
+			FROM inserted i 
+			WHERE i.stan_dostepny > i.stan_bibl
+	)
+	BEGIN
+	RAISERROR(N'Stan dostepny ksiazek osi¹gn¹³ wartoœæ wiêksz¹ ni¿ stan biblioteki', 16, 3)
+	ROLLBACK TRAN
+	END
+GO
+
+/*
+	Tworzê trigger wyœwietlaj¹cy b³¹d w przypadku próby aktualizacji wartoœci stan_dostepny na mniejsz¹ od 0.
+	Trigger ten zapobiega sytuacji, w której chcemy wypo¿yczyæ wiêcej ksi¹¿ek ni¿ jest dostêpnych w bibliotece.
+*/
+
 
 GO
 CREATE TRIGGER dbo.tr_ins_wyp ON WYP FOR INSERT
@@ -1160,28 +1215,17 @@ GO
 */
 
 INSERT INTO WYP(id_osoby, id_ksiazki, liczba, czas) VALUES (1, 1, 2, CONVERT(datetime, '12/01/2022', 103))
-
+exec pokaz
 /*
 	Po wprowadzeniu danych, stan dostêpny ksi¹¿ki "Pan Tadeusz" zmniejszy³ siê o liczbê wypo¿yczonych ksi¹¿ek - o 2.
 
-	KSIAZKI:
-	tytul                autor                id_ksiazki  stan_bibl   stan_dostepny
-	-------------------- -------------------- ----------- ----------- -------------
-	Pan Tadeusz          Adam Mickiewicz      1           4           2
-	Kordian              Juliusz S³owacki     2           5           5
-	Dziady               Adam Mickiewicz      3           7           7
-	Rok 1984             George Orwell        4           2           2
-	Quo Vadis            Henryk Sienkiewicz   5           4           4
-
-	WYP:
-	id_osoby    id_ksiazki  liczba      czas
-	----------- ----------- ----------- -----------------------
-	1           1           2           2022-01-12 00:00:00.000
-	2           2           1           2022-03-02 00:00:00.000
-	3           3           2           2022-01-18 00:00:00.000
-	4           4           2           2022-04-21 00:00:00.000
-	5           5           2           2022-05-06 00:00:00.000
-	1           1           2           2022-01-12 00:00:00.000
+	tytul                autor                id_ksiazki  stan_bibl   stan_dostepny liczba wyp  liczba zwr
+	-------------------- -------------------- ----------- ----------- ------------- ----------- -----------
+	Pan Tadeusz          Adam Mickiewicz      1           4           2             2           0
+	Kordian              Juliusz S³owacki     2           5           5             0           0
+	Dziady               Adam Mickiewicz      3           7           7             0           0
+	Rok 1984             George Orwell        4           2           2             0           0
+	Quo Vadis            Henryk Sienkiewicz   5           4           4             0           0
 */
 
 GO
@@ -1201,33 +1245,26 @@ GO
 */
 
 INSERT INTO ZWR(id_osoby, id_ksiazki, liczba, czas) VALUES (1, 1, 2, CONVERT(datetime, '12/01/2022', 103))
-
+exec pokaz
 /*
 	Po zwróceniu ksi¹¿ki "Pan Tadeusz", stan dostêpny ksi¹¿ek w bibliotece zwiêkszy³ siê o 2, a wiêc wróci³ do pierwotnej wartoœci.
 
-	KSIAZKI:
-	tytul                autor                id_ksiazki  stan_bibl   stan_dostepny
-	-------------------- -------------------- ----------- ----------- -------------
-	Pan Tadeusz          Adam Mickiewicz      1           4           4
-	Kordian              Juliusz S³owacki     2           5           5
-	Dziady               Adam Mickiewicz      3           7           7
-	Rok 1984             George Orwell        4           2           2
-	Quo Vadis            Henryk Sienkiewicz   5           4           4
-
-	ZWR:
-	id_osoby    id_ksiazki  liczba      czas
-	----------- ----------- ----------- -----------------------
-	2           5           1           2022-01-06 00:00:00.000
-	4           1           2           2021-09-01 00:00:00.000
-	3           3           1           2020-11-26 00:00:00.000
-	1           1           2           2022-01-12 00:00:00.000
+	tytul                autor                id_ksiazki  stan_bibl   stan_dostepny liczba wyp  liczba zwr
+	-------------------- -------------------- ----------- ----------- ------------- ----------- -----------
+	Pan Tadeusz          Adam Mickiewicz      1           4           4             2           2
+	Kordian              Juliusz S³owacki     2           5           5             0           0
+	Dziady               Adam Mickiewicz      3           7           7             0           0
+	Rok 1984             George Orwell        4           2           2             0           0
+	Quo Vadis            Henryk Sienkiewicz   5           4           4             0           0
 */
 
 GO
 CREATE TRIGGER dbo.tr_del_wyp ON WYP FOR DELETE
 AS
-	UPDATE KSIAZKI SET stan_dostepny = stan_dostepny + d.liczba
-	FROM KSIAZKI k JOIN deleted d ON k.id_ksiazki = d.id_ksiazki
+	UPDATE KSIAZKI SET stan_dostepny = stan_dostepny + (d.liczba - z.liczba)
+	FROM KSIAZKI k 
+	JOIN deleted d ON k.id_ksiazki = d.id_ksiazki
+	JOIN ZWR z ON k.id_ksiazki = z.id_ksiazki
 	WHERE k.id_ksiazki IN (
 		SELECT d.id_ksiazki
 			FROM deleted d JOIN KSIAZKI k ON d.id_ksiazki = k.id_ksiazki
@@ -1239,41 +1276,34 @@ GO
 */
 
 DELETE FROM WYP WHERE WYP.id_ksiazki = 1
-
+exec pokaz
 /* 
 	Po usuniêciu z tabeli WYP dwóch rekordów o id_ksiazki = 1 - "Pan Tadeusz", ka¿da po 2 sztuki, do tabeli KSIAZKI dodane zosta³y 4 takie ksi¹¿ki.
 	W tabeli ksiazki znajduje sie zatem obecnie 6 ksiazek "Pan Tadeusz".
 
-	KSIAZKI:
-	tytul                autor                id_ksiazki  stan_bibl   stan_dostepny
-	-------------------- -------------------- ----------- ----------- -------------
-	Pan Tadeusz          Adam Mickiewicz      1           4           6
-	Kordian              Juliusz S³owacki     2           5           5
-	Dziady               Adam Mickiewicz      3           7           7
-	Rok 1984             George Orwell        4           2           2
-	Quo Vadis            Henryk Sienkiewicz   5           4           4
-
-	WYP:
-	id_osoby    id_ksiazki  liczba      czas
-	----------- ----------- ----------- -----------------------
-	2           2           1           2022-03-02 00:00:00.000
-	3           3           2           2022-01-18 00:00:00.000
-	4           4           2           2022-04-21 00:00:00.000
-	5           5           2           2022-05-06 00:00:00.000
+	tytul                autor                id_ksiazki  stan_bibl   stan_dostepny liczba wyp  liczba zwr
+	-------------------- -------------------- ----------- ----------- ------------- ----------- -----------
+	Pan Tadeusz          Adam Mickiewicz      1           4           4             0           0
+	Kordian              Juliusz S³owacki     2           5           5             0           0
+	Dziady               Adam Mickiewicz      3           7           7             0           0
+	Rok 1984             George Orwell        4           2           2             0           0
+	Quo Vadis            Henryk Sienkiewicz   5           4           4             0           0
 */
-
 
 GO
 CREATE TRIGGER dbo.tr_del_zwr ON ZWR FOR DELETE
 AS
-	UPDATE KSIAZKI SET stan_dostepny = stan_dostepny - d.liczba
+	UPDATE KSIAZKI SET stan_dostepny = stan_dostepny - (d.liczba)
 	FROM KSIAZKI k JOIN deleted d ON k.id_ksiazki = d.id_ksiazki
+	JOIN WYP w ON k.id_ksiazki = w.id_ksiazki
 	WHERE k.id_ksiazki IN (
 		SELECT d.id_ksiazki
 			FROM deleted d JOIN KSIAZKI k ON d.id_ksiazki = k.id_ksiazki
 	)
 GO
 
+DELETE FROM ZWR WHERE ZWR.id_ksiazki = 1
+exec pokaz
 
 /*	
 	Tworzê trigger reaguj¹cy na usuwanie rekordów z tabeli ZWR.
@@ -1283,23 +1313,16 @@ GO
 DELETE FROM ZWR WHERE ZWR.id_ksiazki = 1
 
 /* 
-	Po usuniêciu z tabeli ZWR rekordU o id_ksiazki = 1 - "Pan Tadeusz" (2 sztuki) , z tabeli KSIAZKI zosta³y usuniête 2 takie ksi¹¿ki.
-	W tabeli ksiazki znajduj¹ sie zatem obecnie 4 ksia¿ki "Pan Tadeusz".
+	Po usuniêciu z tabeli ZWR rekordU o id_ksiazki = 1 - "Pan Tadeusz" (2 sztuki), stan obecny ksi¹¿ek i liczba zwrotów zmieni³y siê.
+	Stan dostêpny biblioteki wynnosi zatem obecnie 2 ksi¹¿ki.
 
-	KSIAZKI:
-	tytul                autor                id_ksiazki  stan_bibl   stan_dostepny
-	-------------------- -------------------- ----------- ----------- -------------
-	Pan Tadeusz          Adam Mickiewicz      1           4           4
-	Kordian              Juliusz S³owacki     2           5           5
-	Dziady               Adam Mickiewicz      3           7           7
-	Rok 1984             George Orwell        4           2           2
-	Quo Vadis            Henryk Sienkiewicz   5           4           4
-
-	ZWR:
-	id_osoby    id_ksiazki  liczba      czas
-	----------- ----------- ----------- -----------------------
-	2           5           1           2022-01-06 00:00:00.000
-	3           3           1           2020-11-26 00:00:00.000
+	tytul                autor                id_ksiazki  stan_bibl   stan_dostepny liczba wyp  liczba zwr
+	-------------------- -------------------- ----------- ----------- ------------- ----------- -----------
+	Pan Tadeusz          Adam Mickiewicz      1           4           2             2           0
+	Kordian              Juliusz S³owacki     2           5           5             0           0
+	Dziady               Adam Mickiewicz      3           7           7             0           0
+	Rok 1984             George Orwell        4           2           2             0           0
+	Quo Vadis            Henryk Sienkiewicz   5           4           4             0           0
 */
 GO
 CREATE TRIGGER dbo.tr_upd_wyp ON WYP FOR UPDATE
@@ -1397,19 +1420,3 @@ stan bibl - liczba ksiazek jaka mialaby biblioteka gdyby nikt nic nie wypozyczyl
 
 SELECT * FROM WYP
 
-GO
-ALTER PROCEDURE dbo.pokaz
-AS
-	SELECT k.*, x.[liczba wyp] AS [liczba wyp], x.[liczba zwr] AS [liczba zwr]
-			FROM KSIAZKI k
-			JOIN WYP w ON w.id_ksiazki = k.id_ksiazki
-			JOIN ZWR z ON z.id_ksiazki = k.id_ksiazki
-			JOIN (
-					SELECT w.id_ksiazki, ISNULL(SUM(w.liczba),0) AS [liczba wyp], ISNULL(SUM(z.liczba),0) AS [liczba zwr]
-							FROM WYP w
-							JOIN ZWR z ON z.id_ksiazki = w.id_ksiazki
-							GROUP BY w.id_ksiazki
-				) x ON x.id_ksiazki = k.id_ksiazki
-GO
-
-EXEC pokaz
