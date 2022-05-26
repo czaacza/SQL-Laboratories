@@ -1043,6 +1043,9 @@ stan bibl - liczba ksiazek jaka mialaby biblioteka gdyby nikt nic nie wypozyczyl
 
 
 GO
+IF OBJECT_ID(N'SKASOWANE') IS NOT NULL
+	DROP TABLE SKASOWANE
+
 IF OBJECT_ID(N'ZWR') IS NOT NULL
 	DROP TABLE ZWR
 
@@ -1052,6 +1055,7 @@ IF OBJECT_ID(N'WYP') IS NOT NULL
 IF OBJECT_ID(N'KSIAZKI') IS NOT NULL
 	DROP TABLE KSIAZKI
 
+
 DROP TRIGGER tr_ins_ks
 DROP TRIGGER tr_ins_wyp
 DROP TRIGGER tr_ins_zwr
@@ -1059,6 +1063,8 @@ DROP TRIGGER tr_del_wyp
 DROP TRIGGER tr_del_zwr
 DROP TRIGGER tr_upd_wyp
 DROP TRIGGER tr_upd_zwr
+DROP TRIGGER tr_del_wyp_sk
+DROP TRIGGER tr_del_zwr_sk
 
 CREATE TABLE dbo.KSIAZKI 
 (
@@ -1088,6 +1094,16 @@ CREATE TABLE dbo.ZWR
 	liczba			int				NOT NULL,
 	czas			datetime		NOT NULL,
 )	
+
+CREATE TABLE dbo.skasowane 
+( 
+	rodzaj		nchar(3)	NOT NULL,
+	id_osoby	int			NOT NULL	CONSTRAINT FK_SK_OSOBY 
+										FOREIGN KEY REFERENCES OSOBY(id_osoby),
+	id_ksiazki	int			NOT NULL	CONSTRAINT FK_SK_KSIAZKI
+										FOREIGN KEY  REFERENCES KSIAZKI(id_ksiazki),
+	liczba		int			NOT NULL
+)
 
 GO
 CREATE TRIGGER dbo.tr_ins_ks ON KSIAZKI FOR INSERT
@@ -1261,7 +1277,7 @@ exec pokaz
 GO
 CREATE TRIGGER dbo.tr_del_wyp ON WYP FOR DELETE
 AS
-	UPDATE KSIAZKI SET stan_dostepny = stan_dostepny + (d.liczba - z.liczba)
+	UPDATE KSIAZKI SET stan_dostepny = stan_dostepny + d.liczba
 	FROM KSIAZKI k 
 	JOIN deleted d ON k.id_ksiazki = d.id_ksiazki
 	JOIN ZWR z ON k.id_ksiazki = z.id_ksiazki
@@ -1293,7 +1309,7 @@ exec pokaz
 GO
 CREATE TRIGGER dbo.tr_del_zwr ON ZWR FOR DELETE
 AS
-	UPDATE KSIAZKI SET stan_dostepny = stan_dostepny - (d.liczba)
+	UPDATE KSIAZKI SET stan_dostepny = stan_dostepny - d.liczba
 	FROM KSIAZKI k JOIN deleted d ON k.id_ksiazki = d.id_ksiazki
 	JOIN WYP w ON k.id_ksiazki = w.id_ksiazki
 	WHERE k.id_ksiazki IN (
@@ -1318,12 +1334,14 @@ DELETE FROM ZWR WHERE ZWR.id_ksiazki = 1
 
 	tytul                autor                id_ksiazki  stan_bibl   stan_dostepny liczba wyp  liczba zwr
 	-------------------- -------------------- ----------- ----------- ------------- ----------- -----------
-	Pan Tadeusz          Adam Mickiewicz      1           4           2             2           0
+	Pan Tadeusz          Adam Mickiewicz      1           4           2             2           2
 	Kordian              Juliusz S³owacki     2           5           5             0           0
 	Dziady               Adam Mickiewicz      3           7           7             0           0
 	Rok 1984             George Orwell        4           2           2             0           0
 	Quo Vadis            Henryk Sienkiewicz   5           4           4             0           0
+
 */
+
 GO
 CREATE TRIGGER dbo.tr_upd_wyp ON WYP FOR UPDATE
 AS
@@ -1342,33 +1360,31 @@ GO
 	Edytuj¹c WYP, trigger odejmuje od stanu dostêpnego ró¿nicê liczby ksi¹¿ek, jaka zosta³a zmieniona.
 */
 
-SELECT * FROM KSIAZKI
-SELECT * FROM WYP
-SELECT * FROM ZWR
-
 UPDATE WYP SET liczba = 3
-WHERE id_ksiazki = 2
+WHERE id_ksiazki = 1
+exec pokaz
 
 /*
-	Po edytowaniu liczby (z wartosci 1 do 3) wypo¿yczonych ksi¹zek o id_ksiazki = 2, stan tabeli ksiazki zmienia siê o ró¿nicê zedytowanej i poprzedniej wartoœci. 
-	Stan dostepny ksiazki "Kordian" zmniejszy³ siê wiêc z 5 do 3.
+	Po edytowaniu liczby (z wartosci 2 do 3) wypo¿yczonych ksi¹zek o id_ksiazki = 1, stan tabeli ksiazki zmienia siê o ró¿nicê zedytowanej i poprzedniej wartoœci. 
+	Stan dostepny ksiazki "Pan Tadeusz" zmniejszy³ siê wiêc z 2 do 1.
 
-	KSIAZKI:
-	tytul                autor                id_ksiazki  stan_bibl   stan_dostepny
-	-------------------- -------------------- ----------- ----------- -------------
-	Pan Tadeusz          Adam Mickiewicz      1           4           4
-	Kordian              Juliusz S³owacki     2           5           3
-	Dziady               Adam Mickiewicz      3           7           7
-	Rok 1984             George Orwell        4           2           2
-	Quo Vadis            Henryk Sienkiewicz   5           4           4
+	Stan przed UPDATE:
+	tytul                autor                id_ksiazki  stan_bibl   stan_dostepny liczba wyp  liczba zwr
+	-------------------- -------------------- ----------- ----------- ------------- ----------- -----------
+	Pan Tadeusz          Adam Mickiewicz      1           4           2             2           0
+	Kordian              Juliusz S³owacki     2           5           5             0           0
+	Dziady               Adam Mickiewicz      3           7           7             0           0
+	Rok 1984             George Orwell        4           2           2             0           0
+	Quo Vadis            Henryk Sienkiewicz   5           4           4             0           0
 
-	WYP:
-	id_osoby    id_ksiazki  liczba      czas
-	----------- ----------- ----------- -----------------------
-	2           2           3           2022-03-02 00:00:00.000
-	3           3           2           2022-01-18 00:00:00.000
-	4           4           2           2022-04-21 00:00:00.000
-	5           5           2           2022-05-06 00:00:00.000
+	Stan po UPDATE:
+	tytul                autor                id_ksiazki  stan_bibl   stan_dostepny liczba wyp  liczba zwr
+	-------------------- -------------------- ----------- ----------- ------------- ----------- -----------
+	Pan Tadeusz          Adam Mickiewicz      1           4           1             3           0
+	Kordian              Juliusz S³owacki     2           5           5             0           0
+	Dziady               Adam Mickiewicz      3           7           7             0           0
+	Rok 1984             George Orwell        4           2           2             0           0
+	Quo Vadis            Henryk Sienkiewicz   5           4           4             0           0
 */
 
 GO
@@ -1389,34 +1405,65 @@ GO
 	Edytuj¹c ZWR, trigger doda do stanu dostêpnego ró¿nicê liczby ksi¹¿ek, jaka zosta³a zmieniona.
 */
 
-UPDATE ZWR SET liczba = 3
-WHERE id_ksiazki = 3
+UPDATE ZWR SET liczba = 2
+WHERE id_ksiazki = 1
+
+INSERT INTO ZWR (id_osoby, id_ksiazki, liczba, czas) VALUES (2, 1, 1, CONVERT(datetime, '06/01/2022', 103))
+
+exec pokaz
 
 /*
-	Po edytowaniu liczby (z wartosci 1 do 3) zwróconych ksi¹zek o id_ksiazki = 3, stan tabeli ksiazki powiêksza siê o ró¿nicê zedytowanej i poprzedniej wartoœci. 
-	Stan dostepny ksiazki "Dziady" zwiêkszy³ siê wiêc z 7 do 9.
+	Po edytowaniu liczby (z wartosci 1 do 2) zwróconych ksi¹zek o id_ksiazki = 1, stan tabeli ksiazki powiêksza siê o ró¿nicê zedytowanej i poprzedniej wartoœci. 
+	Stan dostepny ksiazki "Pan Tadeusz" zwiêkszy³ siê wiêc z 3 do 4.
 
-	KSIAZKI:
-	tytul                autor                id_ksiazki  stan_bibl   stan_dostepny
-	-------------------- -------------------- ----------- ----------- -------------
-	Pan Tadeusz          Adam Mickiewicz      1           4           4
-	Kordian              Juliusz S³owacki     2           5           3
-	Dziady               Adam Mickiewicz      3           7           9
-	Rok 1984             George Orwell        4           2           2
-	Quo Vadis            Henryk Sienkiewicz   5           4           4
-*/
-/*
-** Testowanie: stworzcie procedurê, która pokaze wszystkie ksi¹zki,
-** dane ksi¹zki, stan_bibl, SUM(liczba) z ZWR - SUM(liczba) z WYP =>
-** ISNULL(SUM(Liczba),0)
-** te dwie kolumny powiny byæ równe
-** po wielu dzialaniach w bazie
-** dzialania typu kasowanie rejestrowac w tabeli skasowane
-** (rodzaj (wyp/zwr), id_os, id_ks, liczba)
-** osobne triggery na DELETE z WYP i ZWR które bêd¹ rejestrowaæ skasowania\
+	Stan przed UPDATE:
+	tytul                autor                id_ksiazki  stan_bibl   stan_dostepny liczba wyp  liczba zwr
+	-------------------- -------------------- ----------- ----------- ------------- ----------- -----------
+	Pan Tadeusz          Adam Mickiewicz      1           4           3             2           1
+	Kordian              Juliusz S³owacki     2           5           5             0           0
+	Dziady               Adam Mickiewicz      3           7           7             0           0
+	Rok 1984             George Orwell        4           2           2             0           0
+	Quo Vadis            Henryk Sienkiewicz   5           4           4             0           0
 
-stan bibl - liczba ksiazek jaka mialaby biblioteka gdyby nikt nic nie wypozyczyl
+	Stan po UPDATE:
+	tytul                autor                id_ksiazki  stan_bibl   stan_dostepny liczba wyp  liczba zwr
+	-------------------- -------------------- ----------- ----------- ------------- ----------- -----------
+	Pan Tadeusz          Adam Mickiewicz      1           4           4             2           2
+	Kordian              Juliusz S³owacki     2           5           5             0           0
+	Dziady               Adam Mickiewicz      3           7           7             0           0
+	Rok 1984             George Orwell        4           2           2             0           0
+	Quo Vadis            Henryk Sienkiewicz   5           4           4             0           0
 */
 
-SELECT * FROM WYP
 
+
+GO
+CREATE TRIGGER dbo.tr_del_wyp_sk ON WYP FOR DELETE
+AS
+	DECLARE @wyp nchar(3)
+	SET @wyp = N'wyp'
+	INSERT INTO skasowane SELECT @wyp, d.id_osoby, d.id_ksiazki, d.liczba FROM deleted d
+GO
+
+CREATE TRIGGER dbo.tr_del_zwr_sk ON ZWR FOR DELETE
+AS
+	DECLARE @zwr nchar(3)
+	SET @zwr = N'zwr'
+	INSERT INTO skasowane SELECT @zwr, d.id_osoby, d.id_ksiazki, d.liczba FROM deleted d
+GO
+
+
+DELETE FROM ZWR WHERE ZWR.id_ksiazki = 1
+DELETE FROM WYP WHERE WYP.id_ksiazki = 1
+SELECT * FROM skasowane
+
+/* 
+	Tworzê osobne triggery dla WYP i ZWR reaguj¹ce na usuwanie rekordów z tabel.
+	rodzaj (wyp/zwr), id_osoby, id_ksiazki i liczba usuniêtych ksi¹¿ek zapisana zostanie do osobnej tabeli skasowane.
+	Po przyk³adowym usuniêciu rekordów z tabel ZWR i WYP, tabela skasowane prezentuje siê nastêpuj¹co:
+	
+	rodzaj id_osoby    id_ksiazki  liczba
+	------ ----------- ----------- -----------
+	zwr    2           1           2
+	wyp    1           1           2
+*/
